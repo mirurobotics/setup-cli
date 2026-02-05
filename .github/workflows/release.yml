@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  check-dist:
+    uses: ./.github/workflows/check-dist.yml
+  codeql-analysis:
+    uses: ./.github/workflows/codeql-analysis.yml
+  lint:
+    uses: ./.github/workflows/linter.yml
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: [check-dist, codeql-analysis, lint, ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Update major and minor version tags
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+
+          # Skip tag updates for prereleases (contains hyphen after version)
+          if [[ "$VERSION" == *-* ]]; then
+            echo "Skipping tag updates for prerelease: $VERSION"
+            exit 0
+          fi
+
+          MAJOR=${VERSION%%.*}
+          MINOR=${VERSION%.*}
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -fa "$MAJOR" -m "Update $MAJOR to $VERSION"
+          git tag -fa "$MINOR" -m "Update $MINOR to $VERSION"
+          git push origin "$MAJOR" "$MINOR" --force
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+
+          PRERELEASE_FLAG=""
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --generate-notes \
+            ${PRERELEASE_FLAG:+"$PRERELEASE_FLAG"}
