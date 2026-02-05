@@ -1,62 +1,119 @@
 /**
- * Unit tests for the action's main functionality, src/main.ts
- *
- * To mock dependencies in ESM, you can create fixtures that export mock
- * functions and objects. For example, the core module is mocked in this test,
- * so that the actual '@actions/core' module is not imported.
+ * Unit tests for the main action entry point
  */
-import { jest } from '@jest/globals'
-import * as core from '../__fixtures__/core.js'
-import { wait } from '../__fixtures__/wait.js'
+import * as path from 'path'
+import * as fs from 'fs'
+import * as yaml from 'js-yaml'
+import * as url from 'url'
+import { expect, test, describe, jest, beforeEach } from '@jest/globals'
 
-// Mocks should be declared before the module being tested is imported.
-jest.unstable_mockModule('@actions/core', () => core)
-jest.unstable_mockModule('../src/wait.js', () => ({ wait }))
+// Mock @actions/core
+const mockGetInput = jest.fn()
+const mockSetOutput = jest.fn()
+const mockAddPath = jest.fn()
+const mockInfo = jest.fn()
+const mockSetFailed = jest.fn()
 
-// The module being tested should be imported dynamically. This ensures that the
-// mocks are used in place of any actual dependencies.
+jest.unstable_mockModule('@actions/core', () => ({
+  getInput: mockGetInput,
+  setOutput: mockSetOutput,
+  addPath: mockAddPath,
+  info: mockInfo,
+  setFailed: mockSetFailed
+}))
+
+// Mock @actions/tool-cache
+const mockDownloadTool = jest.fn()
+const mockExtractTar = jest.fn()
+
+jest.unstable_mockModule('@actions/tool-cache', () => ({
+  downloadTool: mockDownloadTool,
+  extractTar: mockExtractTar
+}))
+
+// Mock versions module
+jest.unstable_mockModule('../src/versions.js', () => ({
+  sanitize: jest.fn((v: string) => v || 'latest'),
+  resolve: jest.fn((v: string) => v === 'latest' ? 'v0.9.0' : v)
+}))
+
+// Mock releases module
+jest.unstable_mockModule('../src/releases.js', () => ({
+  getDownloadUrl: jest.fn(() => 'https://example.com/cli.tar.gz')
+}))
+
+// Import after mocking
 const { run } = await import('../src/main.js')
 
-describe('main.ts', () => {
+describe('run', () => {
   beforeEach(() => {
-    // Set the action's inputs as return values from core.getInput().
-    core.getInput.mockImplementation(() => '500')
-
-    // Mock the wait function so that it does not actually wait.
-    wait.mockImplementation(() => Promise.resolve('done!'))
+    jest.clearAllMocks()
+    mockDownloadTool.mockResolvedValue('/tmp/cli.tar.gz')
+    mockExtractTar.mockResolvedValue('/tmp/cli')
   })
 
-  afterEach(() => {
-    jest.resetAllMocks()
-  })
-
-  it('Sets the time output', async () => {
-    await run()
-
-    // Verify the time output was set.
-    expect(core.setOutput).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      // Simple regex to match a time string in the format HH:MM:SS.
-      expect.stringMatching(/^\d{2}:\d{2}:\d{2}/)
-    )
-  })
-
-  it('Sets a failed status', async () => {
-    // Clear the getInput mock and return an invalid value.
-    core.getInput.mockClear().mockReturnValueOnce('this is not a number')
-
-    // Clear the wait mock and return a rejected promise.
-    wait
-      .mockClear()
-      .mockRejectedValueOnce(new Error('milliseconds is not a number'))
+  test('installs CLI with default version', async () => {
+    mockGetInput.mockReturnValue('')
 
     await run()
 
-    // Verify that the action was marked as failed.
-    expect(core.setFailed).toHaveBeenNthCalledWith(
-      1,
-      'milliseconds is not a number'
-    )
+    expect(mockGetInput).toHaveBeenCalledWith('version')
+    expect(mockDownloadTool).toHaveBeenCalled()
+    expect(mockExtractTar).toHaveBeenCalledWith('/tmp/cli.tar.gz')
+    expect(mockAddPath).toHaveBeenCalledWith('/tmp/cli')
+    expect(mockSetOutput).toHaveBeenCalledWith('version', 'v0.9.0')
+    expect(mockInfo).toHaveBeenCalledWith('Miru CLI v0.9.0 installed successfully')
+  })
+
+  test('installs CLI with specific version', async () => {
+    mockGetInput.mockReturnValue('v1.0.0')
+
+    await run()
+
+    expect(mockGetInput).toHaveBeenCalledWith('version')
+    expect(mockSetOutput).toHaveBeenCalledWith('version', 'v1.0.0')
+    expect(mockInfo).toHaveBeenCalledWith('Miru CLI v1.0.0 installed successfully')
+  })
+
+  test('handles download error', async () => {
+    mockGetInput.mockReturnValue('v0.9.0')
+    mockDownloadTool.mockRejectedValue(new Error('Download failed'))
+
+    await run()
+
+    expect(mockSetFailed).toHaveBeenCalledWith('Download failed')
+  })
+
+  test('handles extraction error', async () => {
+    mockGetInput.mockReturnValue('v0.9.0')
+    mockExtractTar.mockRejectedValue(new Error('Extraction failed'))
+
+    await run()
+
+    expect(mockSetFailed).toHaveBeenCalledWith('Extraction failed')
+  })
+})
+
+describe('action.yml', () => {
+  test('has correct structure', () => {
+    const repo = path.dirname(path.dirname(url.fileURLToPath(import.meta.url)))
+    const configPath = path.join(repo, 'action.yml')
+    const config = yaml.load(fs.readFileSync(configPath, 'utf8')) as {
+      name: string
+      inputs: {
+        version: { default: string; required: boolean }
+        token: { required: boolean }
+      }
+      outputs: { version: { description: string } }
+      runs: { using: string; main: string }
+    }
+
+    expect(config.name).toBe('Setup Miru CLI')
+    expect(config.inputs.version.default).toBe('latest')
+    expect(config.inputs.version.required).toBe(false)
+    expect(config.inputs.token.required).toBe(false)
+    expect(config.outputs.version).toBeDefined()
+    expect(config.runs.using).toBe('node24')
+    expect(config.runs.main).toBe('dist/index.js')
   })
 })

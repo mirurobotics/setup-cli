@@ -1,23 +1,28 @@
-name: The name of your action here
-description: Provide a description here
-author: Your name or organization here
+name: Setup Miru CLI
+description: Install the Miru CLI
+author: Miru Robotics
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: heart
-  color: red
+  icon: download
+  color: purple
 
-# Define your inputs here.
 inputs:
-  milliseconds:
-    description: Your input description here
-    required: true
-    default: '1000'
+  version:
+    description:
+      'Miru CLI version to install (e.g., v0.9.0). Supports exact versions
+      (v0.9.0), or "latest". Defaults to latest.'
+    required: false
+    default: 'latest'
+  token:
+    description:
+      'GitHub token for API requests (avoids rate limits). Defaults to
+      github.token.'
+    required: false
+    default: ${{ github.token }}
 
-# Define your outputs here.
 outputs:
-  time:
-    description: Your output description here
+  version:
+    description: The version of the CLI that was installed
 
 runs:
   using: node24

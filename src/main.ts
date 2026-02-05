@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
-import { wait } from './wait.js'
+import * as tc from '@actions/tool-cache'
+import * as versions from './versions.js'
+import * as releases from './releases.js'
 
 /**
  * The main function for the action.
@@ -8,20 +10,30 @@ import { wait } from './wait.js'
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    const version = getInputVersion()
+    const pathToCLI = await downloadMiruCLI(version)
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    // expose the tool by adding it to the PATH
+    core.addPath(pathToCLI)
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    // expose installed tool version
+    core.setOutput('version', version)
+    core.info(`Miru CLI ${version} installed successfully`)
   } catch (error) {
-    // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
   }
+}
+
+const getInputVersion = (): string => {
+  const inputVersion = core.getInput('version')
+  const sanitizedVersion = versions.sanitize(inputVersion)
+  return versions.resolve(sanitizedVersion)
+}
+
+const downloadMiruCLI = async (version: string): Promise<string> => {
+  const downloadUrl = await releases.getDownloadUrl(version)
+  core.info(`Downloading Miru CLI from ${downloadUrl}`)
+  const pathToTarball = await tc.downloadTool(downloadUrl)
+  const pathToCLI = await tc.extractTar(pathToTarball)
+  return pathToCLI
 }

@@ -1,10 +1,10 @@
-name: Continuous Integration
+name: CI
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-  push:
+  pull_request:
     branches:
       - main
 
@@ -12,8 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  test-typescript:
-    name: TypeScript Tests
+  unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -45,20 +45,86 @@ jobs:
         run: npm run ci-test
 
   test-action:
-    name: GitHub Actions Test
+    name: Test Action
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        id: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Test Local Action
         id: test-action
         uses: ./
         with:
-          milliseconds: 2000
+          version: latest
 
       - name: Print Output
-        id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+        run: |
+          echo "Installed version: ${{ steps.test-action.outputs.version }}"
+          miru version
+
+
+  action-tests:
+    name: Action Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux
+          - os: ubuntu-24.04
+          - os: ubuntu-22.04
+          - os: ubuntu-slim
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Miru CLI
+        id: setup
+        uses: ./
+
+      - name: Verify installation
+        run: |
+          miru version
+          echo "Installed version: ${{ steps.setup.outputs.version }}"
+
+      - name: Verify version output
+        run: |
+          if [ -z "${{ steps.setup.outputs.version }}" ]; then
+            echo "ERROR: version output is empty!"
+            exit 1
+          fi
+          echo "version output is set correctly: ${{ steps.setup.outputs.version }}"
+
+  version-pin-test:
+    name: Version Pin Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Miru CLI (pinned)
+        id: setup
+        uses: ./
+        with:
+          version: 'v0.7.0'
+
+      - name: Verify pinned version
+        run: |
+          version=$(miru version)
+          echo "Installed: $version"
+          echo "$version" | grep -q "0.7.0"
+
+      - name: Verify version output matches pinned version
+        run: |
+          output="${{ steps.setup.outputs.version }}"
+          if [ -z "$output" ]; then
+            echo "ERROR: version output is empty!"
+            exit 1
+          fi
+          if [ "$output" != "v0.7.0" ]; then
+            echo "ERROR: version output '$output' does not match expected 'v0.7.0'"
+            exit 1
+          fi
+          echo "version output correctly set to: $output"
