@@ -32,6 +32,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Validate package.json version
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PKG_VERSION=$(jq -r .version package.json)
+          if [[ "$TAG_VERSION" != "$PKG_VERSION" ]]; then
+            echo "::error::Tag version (v$TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "✓ Version validated: v$PKG_VERSION"
+
       - name: Update major and minor version tags
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
