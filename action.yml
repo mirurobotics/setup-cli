@@ -3,8 +3,8 @@ description: Install the Miru CLI
 author: Miru Robotics
 
 branding:
-  icon: download
-  color: purple
+  icon: terminal
+  color: green
 
 inputs:
   version:
