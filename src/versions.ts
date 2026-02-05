@@ -17,9 +17,9 @@ export const sanitize = (version: string): string => {
 export const resolve = (version: string): string => {
   const mappings: Record<string, string> = {
     '': 'v0.9.0',
-    'latest': 'v0.9.0',
-    'v0': 'v0.9.0',
-    'v0.9': 'v0.9.0',
+    latest: 'v0.9.0',
+    v0: 'v0.9.0',
+    'v0.9': 'v0.9.0'
   }
   return mappings[version] || version
 }

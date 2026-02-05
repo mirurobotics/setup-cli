@@ -1,8 +1,8 @@
 import * as os from 'os'
 
 export type DownloadUrlArgs = {
-  version: string,
-  platform: string,
+  version: string
+  platform: string
   arch: string
 }
 
@@ -44,9 +44,7 @@ export const mapPlatform = (platform: string): string => {
  */
 export const mapArch = (arch: string): string => {
   const mappings: Record<string, string> = {
-    x64: 'x86_64',
+    x64: 'x86_64'
   }
   return mappings[arch] || arch
 }
-
-

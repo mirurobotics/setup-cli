@@ -63,7 +63,6 @@ jobs:
           echo "Installed version: ${{ steps.test-action.outputs.version }}"
           miru version
 
-
   action-tests:
     name: Action Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}

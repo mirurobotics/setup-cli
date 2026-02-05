@@ -8,4 +8,5 @@
 ![CodeQL](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-For detailed documentation and usage instructions, please visit the [official documentation](https://docs.mirurobotics.com/docs/developers/ci/gh-actions).
+For detailed documentation and usage instructions, please visit the
+[official documentation](https://docs.mirurobotics.com/docs/developers/ci/gh-actions).

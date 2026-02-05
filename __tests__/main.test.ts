@@ -34,7 +34,7 @@ jest.unstable_mockModule('@actions/tool-cache', () => ({
 // Mock versions module
 jest.unstable_mockModule('../src/versions.js', () => ({
   sanitize: jest.fn((v: string) => v || 'latest'),
-  resolve: jest.fn((v: string) => v === 'latest' ? 'v0.9.0' : v)
+  resolve: jest.fn((v: string) => (v === 'latest' ? 'v0.9.0' : v))
 }))
 
 // Mock releases module
@@ -62,7 +62,9 @@ describe('run', () => {
     expect(mockExtractTar).toHaveBeenCalledWith('/tmp/cli.tar.gz')
     expect(mockAddPath).toHaveBeenCalledWith('/tmp/cli')
     expect(mockSetOutput).toHaveBeenCalledWith('version', 'v0.9.0')
-    expect(mockInfo).toHaveBeenCalledWith('Miru CLI v0.9.0 installed successfully')
+    expect(mockInfo).toHaveBeenCalledWith(
+      'Miru CLI v0.9.0 installed successfully'
+    )
   })
 
   test('installs CLI with specific version', async () => {
@@ -72,7 +74,9 @@ describe('run', () => {
 
     expect(mockGetInput).toHaveBeenCalledWith('version')
     expect(mockSetOutput).toHaveBeenCalledWith('version', 'v1.0.0')
-    expect(mockInfo).toHaveBeenCalledWith('Miru CLI v1.0.0 installed successfully')
+    expect(mockInfo).toHaveBeenCalledWith(
+      'Miru CLI v1.0.0 installed successfully'
+    )
   })
 
   test('handles download error', async () => {

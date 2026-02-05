@@ -15,7 +15,8 @@ jest.unstable_mockModule('os', () => ({
 
 // Import after mocking
 const os = await import('os')
-const { formatDownloadUrl, getDownloadUrl, mapPlatform, mapArch } = await import('../src/releases.js')
+const { formatDownloadUrl, getDownloadUrl, mapPlatform, mapArch } =
+  await import('../src/releases.js')
 
 describe('formatDownloadUrl', () => {
   test('formats URL with version, platform, and arch', () => {
@@ -94,4 +95,3 @@ describe('mapArch', () => {
     expect(mapArch('ia32')).toBe('ia32')
   })
 })
-

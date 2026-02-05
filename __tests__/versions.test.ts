@@ -67,4 +67,3 @@ describe('resolve', () => {
     expect(resolve('v1.2')).toBe('v1.2')
   })
 })
-
