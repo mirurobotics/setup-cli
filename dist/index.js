@@ -33827,6 +33827,11 @@ function requireToolCache () {
 var toolCacheExports = requireToolCache();
 
 /**
+ * The latest stable version of the Miru CLI.
+ * Update this when releasing a new version.
+ */
+const LATEST_VERSION = 'v0.9.1';
+/**
  * Sanitize version to strip whitespace and ensure it has a 'v' prefix
  */
 const sanitize = (version) => {
@@ -33843,10 +33848,10 @@ const sanitize = (version) => {
  */
 const resolve = (version) => {
     const mappings = {
-        '': 'v0.9.0',
-        latest: 'v0.9.0',
-        v0: 'v0.9.0',
-        'v0.9': 'v0.9.0'
+        '': LATEST_VERSION,
+        latest: LATEST_VERSION,
+        v0: LATEST_VERSION,
+        'v0.9': LATEST_VERSION
     };
     return mappings[version] || version;
 };

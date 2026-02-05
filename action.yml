@@ -9,8 +9,8 @@ branding:
 inputs:
   version:
     description:
-      'Miru CLI version to install (e.g., v0.9.0). Supports exact versions
-      (v0.9.0), or "latest". Defaults to latest.'
+      'Miru CLI version to install. Supports exact versions (e.g., v0.9.1),
+      partial versions (e.g., v0.9), or "latest". Defaults to latest.'
     required: false
     default: 'latest'
   token:

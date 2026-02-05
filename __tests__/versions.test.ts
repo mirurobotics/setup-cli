@@ -1,7 +1,7 @@
 /**
  * Unit tests for version handling functions
  */
-import { sanitize, resolve } from '../src/versions.js'
+import { sanitize, resolve, LATEST_VERSION } from '../src/versions.js'
 import { expect, test, describe } from '@jest/globals'
 
 describe('sanitize', () => {
@@ -39,24 +39,24 @@ describe('sanitize', () => {
 })
 
 describe('resolve', () => {
-  test('resolves empty string to v0.9.0', () => {
-    expect(resolve('')).toBe('v0.9.0')
+  test('resolves empty string to LATEST_VERSION', () => {
+    expect(resolve('')).toBe(LATEST_VERSION)
   })
 
-  test('resolves latest to v0.9.0', () => {
-    expect(resolve('latest')).toBe('v0.9.0')
+  test('resolves latest to LATEST_VERSION', () => {
+    expect(resolve('latest')).toBe(LATEST_VERSION)
   })
 
-  test('resolves v0 to v0.9.0', () => {
-    expect(resolve('v0')).toBe('v0.9.0')
+  test('resolves v0 to LATEST_VERSION', () => {
+    expect(resolve('v0')).toBe(LATEST_VERSION)
   })
 
-  test('resolves v0.9 to v0.9.0', () => {
-    expect(resolve('v0.9')).toBe('v0.9.0')
+  test('resolves v0.9 to LATEST_VERSION', () => {
+    expect(resolve('v0.9')).toBe(LATEST_VERSION)
   })
 
-  test('passes through exact version v0.9.0', () => {
-    expect(resolve('v0.9.0')).toBe('v0.9.0')
+  test('passes through exact version', () => {
+    expect(resolve('v0.9.1')).toBe('v0.9.1')
   })
 
   test('passes through unknown version as-is', () => {
