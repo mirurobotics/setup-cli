@@ -6,7 +6,12 @@ on:
       - 'v*.*.*'
 
 permissions:
+  actions: read
+  checks: write
   contents: read
+  packages: read
+  security-events: write
+  statuses: write
 
 jobs:
   check-dist:
