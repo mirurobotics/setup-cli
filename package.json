@@ -1,7 +1,7 @@
 {
   "name": "setup-miru-cli",
   "description": "GitHub Action to install the Miru CLI",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "author": "Miru Robotics",
   "type": "module",
   "private": true,
