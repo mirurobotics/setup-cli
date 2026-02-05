@@ -4,9 +4,11 @@
 MD004:
   style: dash
 
-# Disable line length for tables
-MD013:
-  tables: false
+# Disable line length (badge URLs are long)
+MD013: false
+
+# Allow inline HTML (used for badge centering in README)
+MD033: false
 
 # Ordered list item prefix
 MD029:
