@@ -42,7 +42,7 @@
   "dependencies": {
     "@actions/core": "^3.0.0",
     "@actions/tool-cache": "^2.0.2",
-    "semver": "^7.7.2"
+    "semver": "^7.7.4"
   },
   "devDependencies": {
     "@eslint/compat": "^1.4.0",
