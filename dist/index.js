@@ -33830,7 +33830,7 @@ var toolCacheExports = requireToolCache();
  * The latest stable version of the Miru CLI.
  * Update this when releasing a new version.
  */
-const LATEST_VERSION = 'v0.9.1';
+const LATEST_VERSION = 'v0.9.2';
 /**
  * Sanitize version to strip whitespace and ensure it has a 'v' prefix
  */
