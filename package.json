@@ -53,7 +53,7 @@
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^25.4.0",
+    "@types/node": "^25.5.0",
     "@types/semver": "^7.7.0",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
@@ -70,7 +70,7 @@
     "ts-jest": "^29.4.6",
     "ts-jest-resolver": "^2.0.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.0"
+    "typescript-eslint": "^8.57.1"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "*"
