@@ -63,7 +63,7 @@ jobs:
           miru version
 
   action-tests:
-    name: Action Test (${{ matrix.os }})
+    name: action-test-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
