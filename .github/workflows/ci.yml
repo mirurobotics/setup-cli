@@ -14,7 +14,6 @@ permissions:
 
 jobs:
   unit-tests:
-    name: Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -46,7 +45,6 @@ jobs:
         run: npm run ci-test
 
   test-action:
-    name: Test Action
     runs-on: ubuntu-latest
 
     steps:
@@ -98,7 +96,6 @@ jobs:
           echo "version output is set correctly: ${{ steps.setup.outputs.version }}"
 
   version-pin-test:
-    name: Version Pin Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

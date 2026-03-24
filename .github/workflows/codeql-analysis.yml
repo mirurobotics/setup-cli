@@ -18,15 +18,8 @@ permissions:
   security-events: write
 
 jobs:
-  analyze:
-    name: Analyze
+  codeql:
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        language:
-          - typescript
 
     steps:
       - name: Checkout
