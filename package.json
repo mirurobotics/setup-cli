@@ -76,6 +76,12 @@
     "@rollup/rollup-linux-x64-gnu": "*"
   },
   "overrides": {
+    "ts-jest": {
+      "typescript": "$typescript"
+    },
+    "typescript-eslint": {
+      "typescript": "$typescript"
+    },
     "undici": "^6.24.0"
   }
 }
