@@ -6,25 +6,34 @@ on:
       - 'v*.*.*'
 
 permissions:
-  actions: read
-  checks: write
   contents: read
-  packages: read
-  security-events: write
-  statuses: write
 
 jobs:
-  check-dist:
-    uses: ./.github/workflows/check-dist.yml
-  codeql-analysis:
-    uses: ./.github/workflows/codeql-analysis.yml
-  lint:
-    uses: ./.github/workflows/linter.yml
-  ci:
-    uses: ./.github/workflows/ci.yml
+  check-main:
+    name: Verify tag is on main
+    runs-on: ubuntu-latest
+    outputs:
+      on_main: ${{ steps.check.outputs.on_main }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Check ancestry
+        id: check
+        run: |
+          git fetch origin main
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "on_main=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "on_main=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Tag is not on main — skipping release."
+          fi
 
   release:
-    needs: [check-dist, codeql-analysis, lint, ci]
+    needs: check-main
+    if: needs.check-main.outputs.on_main == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
