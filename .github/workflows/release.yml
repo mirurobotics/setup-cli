@@ -9,7 +9,6 @@ permissions:
   contents: read
 
 jobs:
-
   check-main:
     name: Verify tag is on main
     runs-on: ubuntu-latest
