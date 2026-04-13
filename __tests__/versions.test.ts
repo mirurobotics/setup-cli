@@ -51,8 +51,12 @@ describe('resolve', () => {
     expect(resolve('v0')).toBe(LATEST_VERSION)
   })
 
-  test('resolves v0.9 to LATEST_VERSION', () => {
-    expect(resolve('v0.9')).toBe(LATEST_VERSION)
+  test('resolves v0.9 to v0.9.2 (pinned)', () => {
+    expect(resolve('v0.9')).toBe('v0.9.2')
+  })
+
+  test('resolves v0.10 to LATEST_VERSION', () => {
+    expect(resolve('v0.10')).toBe(LATEST_VERSION)
   })
 
   test('passes through exact version', () => {
