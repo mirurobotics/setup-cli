@@ -32596,6 +32596,13 @@ function downloadToolAttempt(url, dest, auth, headers) {
         const http = new HttpClient(userAgent, [], {
             allowRetries: false
         });
+        if (auth) {
+            debug('set auth');
+            if (headers === undefined) {
+                headers = {};
+            }
+            headers.authorization = auth;
+        }
         const response = yield http.get(url, headers);
         if (response.message.statusCode !== 200) {
             const err = new HTTPError(response.message.statusCode);
@@ -32822,7 +32829,10 @@ const getInputVersion = () => {
 const downloadMiruCLI = async (version) => {
     const downloadUrl = await getDownloadUrl(version);
     info(`Downloading Miru CLI from ${downloadUrl}`);
-    const pathToTarball = await downloadTool(downloadUrl);
+    const token = getInput('token');
+    const pathToTarball = token
+        ? await downloadTool(downloadUrl, undefined, `token ${token}`)
+        : await downloadTool(downloadUrl);
     const pathToCLI = await extractTar(pathToTarball);
     return pathToCLI;
 };

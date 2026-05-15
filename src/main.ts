@@ -33,7 +33,10 @@ const getInputVersion = (): string => {
 const downloadMiruCLI = async (version: string): Promise<string> => {
   const downloadUrl = await releases.getDownloadUrl(version)
   core.info(`Downloading Miru CLI from ${downloadUrl}`)
-  const pathToTarball = await tc.downloadTool(downloadUrl)
+  const token = core.getInput('token')
+  const pathToTarball = token
+    ? await tc.downloadTool(downloadUrl, undefined, `token ${token}`)
+    : await tc.downloadTool(downloadUrl)
   const pathToCLI = await tc.extractTar(pathToTarball)
   return pathToCLI
 }
