@@ -32811,8 +32811,7 @@ async function run() {
         info(`Miru CLI ${version} installed successfully`);
     }
     catch (error) {
-        if (error instanceof Error)
-            setFailed(error.message);
+        setFailed(error instanceof Error ? error.message : String(error));
     }
 }
 const getInputVersion = () => {
