@@ -66,6 +66,20 @@ describe('getDownloadUrl', () => {
       'https://github.com/mirurobotics/cli/releases/download/v0.9.0/cli_Linux_arm64.tar.gz'
     )
   })
+
+  test('throws on unsupported platform (darwin)', () => {
+    ;(os.platform as jest.Mock).mockReturnValue('darwin')
+    ;(os.arch as jest.Mock).mockReturnValue('x64')
+
+    expect(() => getDownloadUrl('v0.9.0')).toThrow(/darwin/)
+  })
+
+  test('throws on unsupported arch (ia32)', () => {
+    ;(os.platform as jest.Mock).mockReturnValue('linux')
+    ;(os.arch as jest.Mock).mockReturnValue('ia32')
+
+    expect(() => getDownloadUrl('v0.9.0')).toThrow(/ia32/)
+  })
 })
 
 describe('mapPlatform', () => {
@@ -73,12 +87,14 @@ describe('mapPlatform', () => {
     expect(mapPlatform('linux')).toBe('Linux')
   })
 
-  test('passes through unknown platform', () => {
-    expect(mapPlatform('darwin')).toBe('darwin')
+  test('throws on unknown platform (darwin)', () => {
+    expect(() => mapPlatform('darwin')).toThrow(
+      'Unsupported platform "darwin". The Miru CLI setup action only supports: linux.'
+    )
   })
 
-  test('passes through win32', () => {
-    expect(mapPlatform('win32')).toBe('win32')
+  test('throws on win32', () => {
+    expect(() => mapPlatform('win32')).toThrow(/win32/)
   })
 })
 
@@ -91,7 +107,9 @@ describe('mapArch', () => {
     expect(mapArch('arm64')).toBe('arm64')
   })
 
-  test('passes through unknown arch', () => {
-    expect(mapArch('ia32')).toBe('ia32')
+  test('throws on unknown arch (ia32)', () => {
+    expect(() => mapArch('ia32')).toThrow(
+      'Unsupported architecture "ia32". The Miru CLI setup action only supports: x64, arm64.'
+    )
   })
 })
