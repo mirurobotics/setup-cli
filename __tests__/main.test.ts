@@ -54,8 +54,23 @@ describe('run', () => {
     mockExtractTar.mockResolvedValue('/tmp/cli')
   })
 
+  // Helper to mock getInput per-input. Defaults: given version, empty token.
+  const setInputs = ({
+    version = '',
+    token = ''
+  }: {
+    version?: string
+    token?: string
+  } = {}): void => {
+    mockGetInput.mockImplementation((name: unknown) => {
+      if (name === 'version') return version
+      if (name === 'token') return token
+      return ''
+    })
+  }
+
   test('installs CLI with default version', async () => {
-    mockGetInput.mockReturnValue('')
+    setInputs()
 
     await run()
 
@@ -70,7 +85,7 @@ describe('run', () => {
   })
 
   test('installs CLI with specific version', async () => {
-    mockGetInput.mockReturnValue('v1.0.0')
+    setInputs({ version: 'v1.0.0' })
 
     await run()
 
@@ -81,8 +96,34 @@ describe('run', () => {
     )
   })
 
+  test('downloads with auth when a token is provided', async () => {
+    setInputs({ version: 'v1.0.0', token: 'secret-token' })
+
+    await run()
+
+    expect(mockGetInput).toHaveBeenCalledWith('token')
+    expect(mockDownloadTool).toHaveBeenCalledWith(
+      'https://example.com/cli.tar.gz',
+      undefined,
+      'token secret-token'
+    )
+  })
+
+  test('downloads without auth when no token is provided', async () => {
+    setInputs({ version: 'v1.0.0', token: '' })
+
+    await run()
+
+    expect(mockGetInput).toHaveBeenCalledWith('token')
+    expect(mockDownloadTool).toHaveBeenCalledWith(
+      'https://example.com/cli.tar.gz'
+    )
+    expect(mockDownloadTool).toHaveBeenCalledTimes(1)
+    expect(mockDownloadTool.mock.calls[0]).toHaveLength(1)
+  })
+
   test('handles download error', async () => {
-    mockGetInput.mockReturnValue('v0.9.0')
+    setInputs({ version: 'v0.9.0' })
     mockDownloadTool.mockRejectedValue(new Error('Download failed'))
 
     await run()
@@ -91,7 +132,7 @@ describe('run', () => {
   })
 
   test('handles extraction error', async () => {
-    mockGetInput.mockReturnValue('v0.9.0')
+    setInputs({ version: 'v0.9.0' })
     mockExtractTar.mockRejectedValue(new Error('Extraction failed'))
 
     await run()
