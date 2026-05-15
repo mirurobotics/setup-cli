@@ -20,7 +20,7 @@ export async function run(): Promise<void> {
     core.setOutput('version', version)
     core.info(`Miru CLI ${version} installed successfully`)
   } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
+    core.setFailed(error instanceof Error ? error.message : String(error))
   }
 }
 

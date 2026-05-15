@@ -98,6 +98,15 @@ describe('run', () => {
 
     expect(mockSetFailed).toHaveBeenCalledWith('Extraction failed')
   })
+
+  test('handles non-Error rejection', async () => {
+    mockGetInput.mockReturnValue('v0.9.0')
+    mockDownloadTool.mockRejectedValue('boom')
+
+    await run()
+
+    expect(mockSetFailed).toHaveBeenCalledWith('boom')
+  })
 })
 
 describe('action.yml', () => {
