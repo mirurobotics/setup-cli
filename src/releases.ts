@@ -35,7 +35,14 @@ export const mapPlatform = (platform: string): string => {
   const mappings: Record<string, string> = {
     linux: 'Linux'
   }
-  return mappings[platform] || platform
+  const mapped = mappings[platform]
+  if (!mapped) {
+    const supported = Object.keys(mappings).join(', ')
+    throw new Error(
+      `Unsupported platform "${platform}". The Miru CLI setup action only supports: ${supported}.`
+    )
+  }
+  return mapped
 }
 
 /**
@@ -44,7 +51,15 @@ export const mapPlatform = (platform: string): string => {
  */
 export const mapArch = (arch: string): string => {
   const mappings: Record<string, string> = {
-    x64: 'x86_64'
+    x64: 'x86_64',
+    arm64: 'arm64'
   }
-  return mappings[arch] || arch
+  const mapped = mappings[arch]
+  if (!mapped) {
+    const supported = Object.keys(mappings).join(', ')
+    throw new Error(
+      `Unsupported architecture "${arch}". The Miru CLI setup action only supports: ${supported}.`
+    )
+  }
+  return mapped
 }
