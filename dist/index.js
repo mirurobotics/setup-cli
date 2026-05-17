@@ -32733,7 +32733,7 @@ const sanitize = (version) => {
     if (!version || version.toLowerCase() === 'latest') {
         return 'latest';
     }
-    return `v${version.replace(/^v/, '')}`;
+    return `v${version.replace(/^v/i, '')}`;
 };
 /**
  * Resolve the input version to a specific version. If the version is empty or latest,
@@ -32748,7 +32748,7 @@ const resolve = (version) => {
         'v0.9': 'v0.9.2',
         'v0.10': LATEST_VERSION
     };
-    return mappings[version] || version;
+    return Object.hasOwn(mappings, version) ? mappings[version] : version;
 };
 
 /**

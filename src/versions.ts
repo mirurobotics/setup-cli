@@ -12,7 +12,7 @@ export const sanitize = (version: string): string => {
   if (!version || version.toLowerCase() === 'latest') {
     return 'latest'
   }
-  return `v${version.replace(/^v/, '')}`
+  return `v${version.replace(/^v/i, '')}`
 }
 
 /**
@@ -28,5 +28,5 @@ export const resolve = (version: string): string => {
     'v0.9': 'v0.9.2',
     'v0.10': LATEST_VERSION
   }
-  return mappings[version] || version
+  return Object.hasOwn(mappings, version) ? mappings[version] : version
 }
