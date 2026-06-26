@@ -11,7 +11,7 @@ permissions:
 jobs:
   check-main:
     name: Verify tag is on main
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     outputs:
       on_main: ${{ steps.check.outputs.on_main }}
     steps:
@@ -34,7 +34,7 @@ jobs:
   release:
     needs: check-main
     if: needs.check-main.outputs.on_main == 'true'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     permissions:
       contents: write
 
