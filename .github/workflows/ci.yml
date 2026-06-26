@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
 
     steps:
       - name: Checkout
@@ -45,7 +45,7 @@ jobs:
         run: npm run ci-test
 
   test-action:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
 
     steps:
       - name: Checkout
@@ -96,7 +96,7 @@ jobs:
           echo "version output is set correctly: ${{ steps.setup.outputs.version }}"
 
   version-pin-test:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
