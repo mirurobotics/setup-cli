@@ -11,10 +11,10 @@ inputs:
     description:
       'Miru CLI version to install. Exact versions (e.g., v0.10.2, including
       prerelease tags like v0.10.2-beta.4) are installed directly without any
-      API call. "latest" (the default) and partial versions (e.g., v0.10) are
-      resolved at run time against the GitHub releases of mirurobotics/cli,
-      always selecting the newest stable release (prereleases and drafts
-      excluded).'
+      API call. "latest" (the default) resolves at run time to the most recently
+      published stable release of mirurobotics/cli, and partial versions (e.g.,
+      v0.10) resolve to the highest stable release matching that range
+      (prereleases and drafts excluded in both cases).'
     required: false
     default: 'latest'
   token:
