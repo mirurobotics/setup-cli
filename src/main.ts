@@ -10,7 +10,7 @@ import * as releases from './releases.js'
  */
 export async function run(): Promise<void> {
   try {
-    const version = getInputVersion()
+    const version = await getInputVersion()
     const pathToCLI = await downloadMiruCLI(version)
 
     // expose the tool by adding it to the PATH
@@ -24,10 +24,11 @@ export async function run(): Promise<void> {
   }
 }
 
-const getInputVersion = (): string => {
+const getInputVersion = async (): Promise<string> => {
   const inputVersion = core.getInput('version')
   const sanitizedVersion = versions.sanitize(inputVersion)
-  return versions.resolve(sanitizedVersion)
+  const token = core.getInput('token')
+  return versions.resolve(sanitizedVersion, token)
 }
 
 const downloadMiruCLI = async (version: string): Promise<string> => {
