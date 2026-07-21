@@ -9,14 +9,21 @@ branding:
 inputs:
   version:
     description:
-      'Miru CLI version to install. Supports exact versions (e.g., v0.10.0),
-      partial versions (e.g., v0.10), or "latest". Defaults to latest.'
+      'Miru CLI version to install. Exact versions (e.g., v0.10.2, including
+      prerelease tags like v0.10.2-beta.4) are installed directly without any
+      API call. "latest" (the default) and partial versions (e.g., v0.10) are
+      resolved at run time against the GitHub releases of mirurobotics/cli,
+      always selecting the newest stable release (prereleases and drafts
+      excluded).'
     required: false
     default: 'latest'
   token:
     description:
-      'GitHub token for API requests (avoids rate limits). Defaults to
-      github.token.'
+      'GitHub token used to authenticate GitHub API requests when resolving
+      "latest" or partial versions, and to authenticate release asset downloads
+      (avoids rate limits). Defaults to github.token. If a GitHub API request
+      fails, the action fails with an error naming the endpoint and HTTP status
+      rather than falling back to a stale version.'
     required: false
     default: ${{ github.token }}
 
