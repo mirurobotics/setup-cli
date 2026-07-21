@@ -32954,6 +32954,10 @@ function _getGlobal(key, defaultValue) {
 
 const API_BASE = 'https://api.github.com/repos/mirurobotics/cli';
 const REQUEST_TIMEOUT_MS = 30_000;
+// Used only to derive a proxy dispatcher from the runner's
+// HTTPS_PROXY/HTTP_PROXY/NO_PROXY env vars, so version resolution honors
+// the same proxy configuration as tc.downloadTool.
+const httpClient = new HttpClient();
 /**
  * Sanitize version to strip whitespace and ensure it has a 'v' prefix
  */
@@ -32964,6 +32968,9 @@ const sanitize = (version) => {
     }
     return `v${version.replace(/^v/i, '')}`;
 };
+const isRelease = (value) => typeof value === 'object' &&
+    value !== null &&
+    typeof value.tag_name === 'string';
 const fetchJson = async (url, token) => {
     const headers = {
         Accept: 'application/vnd.github+json',
@@ -32974,13 +32981,23 @@ const fetchJson = async (url, token) => {
     }
     let response;
     try {
+        // The cast bridges undici's ProxyAgent type (from @actions/http-client)
+        // and the undici-types Dispatcher type used by @types/node's fetch.
         response = await fetch(url, {
             headers,
-            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+            dispatcher: httpClient.getAgentDispatcher(url)
         });
     }
     catch (error) {
-        const reason = error instanceof Error ? error.message : String(error);
+        let reason = error instanceof Error ? error.message : String(error);
+        // Node's fetch wraps network failures as TypeError('fetch failed') and
+        // hides the root cause (ENOTFOUND, ECONNREFUSED, ...) in error.cause.
+        if (error instanceof Error &&
+            error.cause instanceof Error &&
+            error.cause.message) {
+            reason += `: ${error.cause.message}`;
+        }
         throw new Error(`GitHub API request failed: GET ${url} (${reason})`, {
             cause: error
         });
@@ -32997,13 +33014,22 @@ const fetchJson = async (url, token) => {
     }
 };
 const resolveLatest = async (token) => {
-    const release = (await fetchJson(`${API_BASE}/releases/latest`, token));
+    const url = `${API_BASE}/releases/latest`;
+    const release = await fetchJson(url, token);
+    if (!isRelease(release)) {
+        throw new Error(`GitHub API request failed: GET ${url} (invalid response body: expected a release object)`);
+    }
     return release.tag_name;
 };
 const resolvePartial = async (version, token) => {
     const tags = [];
     for (let page = 1; page <= 10; page++) {
-        const releases = (await fetchJson(`${API_BASE}/releases?per_page=100&page=${page}`, token));
+        const url = `${API_BASE}/releases?per_page=100&page=${page}`;
+        const body = await fetchJson(url, token);
+        if (!Array.isArray(body) || !body.every(isRelease)) {
+            throw new Error(`GitHub API request failed: GET ${url} (invalid response body: expected an array of releases)`);
+        }
+        const releases = body;
         for (const release of releases) {
             if (!release.draft && !release.prerelease) {
                 tags.push(release.tag_name);
@@ -33023,9 +33049,9 @@ const resolvePartial = async (version, token) => {
 /**
  * Resolve the input version to a specific version. Exact versions (vX.Y.Z,
  * including prerelease suffixes) pass through without any API call. Empty or
- * "latest" resolves to the newest stable release of mirurobotics/cli, and
- * partial versions (vX or vX.Y) resolve to the newest stable release matching
- * that range. Unrecognized strings are returned as is.
+ * "latest" resolves to the most recently published stable release of
+ * mirurobotics/cli, and partial versions (vX or vX.Y) resolve to the highest
+ * stable release matching that range. Unrecognized strings are returned as is.
  */
 const resolve = async (version, token) => {
     if (/^v\d+\.\d+\.\d+/.test(version)) {

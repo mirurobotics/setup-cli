@@ -225,13 +225,25 @@ describe('resolve', () => {
     )
   })
 
-  test('rejects with the original error as cause on network failure', async () => {
+  test('surfaces the root cause when fetch wraps a network failure', async () => {
     const netError = new Error('getaddrinfo ENOTFOUND api.github.com')
+    const fetchError = new TypeError('fetch failed', { cause: netError })
+    fetchSpy.mockRejectedValue(fetchError)
+
+    await expect(resolve('latest', '')).rejects.toMatchObject({
+      message:
+        'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest (fetch failed: getaddrinfo ENOTFOUND api.github.com)',
+      cause: fetchError
+    })
+  })
+
+  test('rejects with the bare message when a network error has no cause', async () => {
+    const netError = new Error('socket hang up')
     fetchSpy.mockRejectedValue(netError)
 
     await expect(resolve('latest', '')).rejects.toMatchObject({
       message:
-        'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest (getaddrinfo ENOTFOUND api.github.com)',
+        'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest (socket hang up)',
       cause: netError
     })
   })
@@ -249,6 +261,30 @@ describe('resolve', () => {
 
     await expect(resolve('latest', '')).rejects.toThrow(
       'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest (invalid response body:'
+    )
+  })
+
+  test('rejects when the latest release body is not a release object', async () => {
+    respondWith({ message: 'unexpected' })
+
+    await expect(resolve('latest', '')).rejects.toThrow(
+      'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest (invalid response body: expected a release object)'
+    )
+  })
+
+  test('rejects when the release list body is not an array', async () => {
+    respondWith({ message: 'unexpected' })
+
+    await expect(resolve('v0.10', '')).rejects.toThrow(
+      'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases?per_page=100&page=1 (invalid response body: expected an array of releases)'
+    )
+  })
+
+  test('rejects when a release entry lacks a tag_name', async () => {
+    respondWith([{ prerelease: false, draft: false }])
+
+    await expect(resolve('v0.10', '')).rejects.toThrow(
+      'invalid response body: expected an array of releases'
     )
   })
 
@@ -276,5 +312,19 @@ describe('resolve', () => {
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28'
     })
+  })
+
+  test('passes a proxy dispatcher to fetch when HTTPS_PROXY is set', async () => {
+    process.env['HTTPS_PROXY'] = 'http://proxy.example.com:8080'
+    try {
+      fetchSpy.mockResolvedValue(jsonResponse({ tag_name: 'v0.10.2' }))
+
+      await resolve('latest', '')
+
+      const [, init] = fetchSpy.mock.calls[0]
+      expect(init?.dispatcher).toBeDefined()
+    } finally {
+      delete process.env['HTTPS_PROXY']
+    }
   })
 })
