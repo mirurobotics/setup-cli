@@ -33,10 +33,12 @@ jest.unstable_mockModule('@actions/tool-cache', () => ({
 
 // Mock versions module
 const MOCK_LATEST_VERSION = 'v0.10.0'
+const mockResolve = jest.fn(async (v: string) =>
+  v === 'latest' ? MOCK_LATEST_VERSION : v
+)
 jest.unstable_mockModule('../src/versions.js', () => ({
-  LATEST_VERSION: MOCK_LATEST_VERSION,
   sanitize: jest.fn((v: string) => v || 'latest'),
-  resolve: jest.fn((v: string) => (v === 'latest' ? MOCK_LATEST_VERSION : v))
+  resolve: mockResolve
 }))
 
 // Mock releases module
@@ -102,6 +104,7 @@ describe('run', () => {
     await run()
 
     expect(mockGetInput).toHaveBeenCalledWith('token')
+    expect(mockResolve).toHaveBeenCalledWith('v1.0.0', 'secret-token')
     expect(mockDownloadTool).toHaveBeenCalledWith(
       'https://example.com/cli.tar.gz',
       undefined,
@@ -147,6 +150,22 @@ describe('run', () => {
     await run()
 
     expect(mockSetFailed).toHaveBeenCalledWith('boom')
+  })
+
+  test('handles version resolution error', async () => {
+    setInputs()
+    mockResolve.mockRejectedValueOnce(
+      new Error(
+        'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest returned HTTP 403'
+      )
+    )
+
+    await run()
+
+    expect(mockSetFailed).toHaveBeenCalledWith(
+      'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest returned HTTP 403'
+    )
+    expect(mockDownloadTool).not.toHaveBeenCalled()
   })
 })
 

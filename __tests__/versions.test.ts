@@ -1,8 +1,15 @@
 /**
  * Unit tests for version handling functions
  */
-import { sanitize, resolve, LATEST_VERSION } from '../src/versions.js'
-import { expect, test, describe } from '@jest/globals'
+import { sanitize, resolve } from '../src/versions.js'
+import {
+  expect,
+  test,
+  describe,
+  jest,
+  beforeEach,
+  afterEach
+} from '@jest/globals'
 
 describe('sanitize', () => {
   test('returns latest for empty string', () => {
@@ -47,47 +54,227 @@ describe('sanitize', () => {
 })
 
 describe('resolve', () => {
-  test('resolves empty string to LATEST_VERSION', () => {
-    expect(resolve('')).toBe(LATEST_VERSION)
+  let fetchSpy: jest.SpiedFunction<typeof globalThis.fetch>
+
+  beforeEach(() => {
+    fetchSpy = jest.spyOn(globalThis, 'fetch')
   })
 
-  test('resolves latest to LATEST_VERSION', () => {
-    expect(resolve('latest')).toBe(LATEST_VERSION)
+  afterEach(() => {
+    fetchSpy.mockRestore()
   })
 
-  test('resolves v0 to LATEST_VERSION', () => {
-    expect(resolve('v0')).toBe(LATEST_VERSION)
+  const jsonResponse = (body: unknown, status = 200): Response =>
+    new Response(JSON.stringify(body), { status })
+
+  // A Response body can only be read once, so mocks that serve multiple
+  // calls must mint a fresh Response per call.
+  const respondWith = (body: unknown): void => {
+    fetchSpy.mockImplementation(async () => jsonResponse(body))
+  }
+
+  const STABLE_FIXTURE = [
+    { tag_name: 'v0.10.2-beta.4', prerelease: true, draft: false },
+    { tag_name: 'v0.10.2', prerelease: false, draft: false },
+    { tag_name: 'v0.10.1', prerelease: false, draft: false },
+    { tag_name: 'v0.9.2', prerelease: false, draft: false }
+  ]
+
+  const FULL_PAGE_OF_STABLE_V020S = Array.from({ length: 100 }, (_, i) => ({
+    tag_name: `v0.20.${i}`,
+    prerelease: false,
+    draft: false
+  }))
+
+  test('resolves latest via the latest release endpoint', async () => {
+    fetchSpy.mockResolvedValue(jsonResponse({ tag_name: 'v0.10.2' }))
+
+    await expect(resolve('latest', '')).resolves.toBe('v0.10.2')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      'https://api.github.com/repos/mirurobotics/cli/releases/latest'
+    )
   })
 
-  test('resolves v0.9 to v0.9.2 (pinned)', () => {
-    expect(resolve('v0.9')).toBe('v0.9.2')
+  test('resolves empty string via the latest release endpoint', async () => {
+    fetchSpy.mockResolvedValue(jsonResponse({ tag_name: 'v0.10.2' }))
+
+    await expect(resolve('', '')).resolves.toBe('v0.10.2')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      'https://api.github.com/repos/mirurobotics/cli/releases/latest'
+    )
   })
 
-  test('resolves v0.10 to LATEST_VERSION', () => {
-    expect(resolve('v0.10')).toBe(LATEST_VERSION)
+  test('resolves v0.10 to the newest stable v0.10.x release', async () => {
+    respondWith(STABLE_FIXTURE)
+
+    await expect(resolve('v0.10', '')).resolves.toBe('v0.10.2')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      'https://api.github.com/repos/mirurobotics/cli/releases?per_page=100&page=1'
+    )
   })
 
-  test('passes through exact version', () => {
-    expect(resolve('v0.9.1')).toBe('v0.9.1')
+  test('resolves v0 to the newest stable v0.x release', async () => {
+    respondWith(STABLE_FIXTURE)
+
+    await expect(resolve('v0', '')).resolves.toBe('v0.10.2')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      'https://api.github.com/repos/mirurobotics/cli/releases?per_page=100&page=1'
+    )
   })
 
-  test('passes through unknown version as-is', () => {
-    expect(resolve('v1.0.0')).toBe('v1.0.0')
+  test('resolves v0.9 to the newest stable v0.9.x release', async () => {
+    respondWith(STABLE_FIXTURE)
+
+    await expect(resolve('v0.9', '')).resolves.toBe('v0.9.2')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      'https://api.github.com/repos/mirurobotics/cli/releases?per_page=100&page=1'
+    )
   })
 
-  test('passes through unknown partial version as-is', () => {
-    expect(resolve('v1.2')).toBe('v1.2')
+  test('paginates past a full page of releases', async () => {
+    fetchSpy.mockResolvedValueOnce(jsonResponse(FULL_PAGE_OF_STABLE_V020S))
+    fetchSpy.mockResolvedValueOnce(
+      jsonResponse([{ tag_name: 'v0.9.2', prerelease: false, draft: false }])
+    )
+
+    await expect(resolve('v0.9', '')).resolves.toBe('v0.9.2')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+    expect(fetchSpy.mock.calls[0][0]).toBe(
+      'https://api.github.com/repos/mirurobotics/cli/releases?per_page=100&page=1'
+    )
+    expect(fetchSpy.mock.calls[1][0]).toBe(
+      'https://api.github.com/repos/mirurobotics/cli/releases?per_page=100&page=2'
+    )
   })
 
-  test('does not resolve inherited prototype key "toString"', () => {
-    expect(resolve('toString')).toBe('toString')
+  test('stops paginating after 10 pages', async () => {
+    respondWith(FULL_PAGE_OF_STABLE_V020S)
+
+    await expect(resolve('v0.9', '')).rejects.toThrow('No stable release')
+
+    expect(fetchSpy).toHaveBeenCalledTimes(10)
   })
 
-  test('does not resolve inherited prototype key "constructor"', () => {
-    expect(resolve('constructor')).toBe('constructor')
+  test('excludes prereleases and drafts from partial resolution', async () => {
+    respondWith([
+      { tag_name: 'v0.10.3', prerelease: true, draft: false },
+      { tag_name: 'v0.10.2', prerelease: false, draft: true },
+      { tag_name: 'v0.10.1', prerelease: false, draft: false }
+    ])
+
+    await expect(resolve('v0.10', '')).resolves.toBe('v0.10.1')
   })
 
-  test('does not resolve inherited prototype key "hasOwnProperty"', () => {
-    expect(resolve('hasOwnProperty')).toBe('hasOwnProperty')
+  test('rejects when no stable release matches the partial version', async () => {
+    respondWith([
+      { tag_name: 'v0.10.3-beta.1', prerelease: true, draft: false },
+      { tag_name: 'v0.10.2-rc.1', prerelease: true, draft: false }
+    ])
+
+    await expect(resolve('v0.10', '')).rejects.toThrow(
+      'No stable release of mirurobotics/cli matches v0.10'
+    )
+  })
+
+  test('passes through exact version without fetching', async () => {
+    await expect(resolve('v0.10.2', '')).resolves.toBe('v0.10.2')
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  test('passes through exact prerelease version without fetching', async () => {
+    await expect(resolve('v0.10.2-beta.4', '')).resolves.toBe('v0.10.2-beta.4')
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  test('does not resolve inherited prototype key "toString"', async () => {
+    await expect(resolve('toString', '')).resolves.toBe('toString')
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  test('does not resolve inherited prototype key "constructor"', async () => {
+    await expect(resolve('constructor', '')).resolves.toBe('constructor')
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  test('does not resolve inherited prototype key "hasOwnProperty"', async () => {
+    await expect(resolve('hasOwnProperty', '')).resolves.toBe('hasOwnProperty')
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  test('rejects with the status code on an HTTP error', async () => {
+    fetchSpy.mockResolvedValue(jsonResponse({}, 403))
+
+    await expect(resolve('latest', '')).rejects.toThrow(
+      'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest returned HTTP 403'
+    )
+  })
+
+  test('rejects with the original error as cause on network failure', async () => {
+    const netError = new Error('getaddrinfo ENOTFOUND api.github.com')
+    fetchSpy.mockRejectedValue(netError)
+
+    await expect(resolve('latest', '')).rejects.toMatchObject({
+      message:
+        'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest (getaddrinfo ENOTFOUND api.github.com)',
+      cause: netError
+    })
+  })
+
+  test('rejects with the status code on an HTTP error while paginating', async () => {
+    fetchSpy.mockResolvedValue(jsonResponse({}, 500))
+
+    await expect(resolve('v0.9', '')).rejects.toThrow(
+      'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases?per_page=100&page=1 returned HTTP 500'
+    )
+  })
+
+  test('rejects when the response body is not valid JSON', async () => {
+    fetchSpy.mockResolvedValue(new Response('not json', { status: 200 }))
+
+    await expect(resolve('latest', '')).rejects.toThrow(
+      'GitHub API request failed: GET https://api.github.com/repos/mirurobotics/cli/releases/latest (invalid response body:'
+    )
+  })
+
+  test('sends auth headers when a token is provided', async () => {
+    fetchSpy.mockResolvedValue(jsonResponse({ tag_name: 'v0.10.2' }))
+
+    await resolve('latest', 'tok123')
+
+    const [, init] = fetchSpy.mock.calls[0]
+    expect(init?.headers).toEqual({
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      Authorization: 'Bearer tok123'
+    })
+    expect(init?.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  test('omits the Authorization header without a token', async () => {
+    fetchSpy.mockResolvedValue(jsonResponse({ tag_name: 'v0.10.2' }))
+
+    await resolve('latest', '')
+
+    const [, init] = fetchSpy.mock.calls[0]
+    expect(init?.headers).toEqual({
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    })
   })
 })
