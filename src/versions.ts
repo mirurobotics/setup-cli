@@ -2,6 +2,8 @@ import * as semver from 'semver'
 
 const API_BASE = 'https://api.github.com/repos/mirurobotics/cli'
 
+const REQUEST_TIMEOUT_MS = 30_000
+
 /**
  * Sanitize version to strip whitespace and ensure it has a 'v' prefix
  */
@@ -29,7 +31,10 @@ const fetchJson = async (url: string, token: string): Promise<unknown> => {
   }
   let response: Response
   try {
-    response = await fetch(url, { headers })
+    response = await fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+    })
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error)
     throw new Error(`GitHub API request failed: GET ${url} (${reason})`, {
@@ -41,7 +46,15 @@ const fetchJson = async (url: string, token: string): Promise<unknown> => {
       `GitHub API request failed: GET ${url} returned HTTP ${response.status}`
     )
   }
-  return response.json()
+  try {
+    return await response.json()
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    throw new Error(
+      `GitHub API request failed: GET ${url} (invalid response body: ${reason})`,
+      { cause: error }
+    )
+  }
 }
 
 const resolveLatest = async (token: string): Promise<string> => {

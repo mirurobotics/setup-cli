@@ -32953,6 +32953,7 @@ function _getGlobal(key, defaultValue) {
 }
 
 const API_BASE = 'https://api.github.com/repos/mirurobotics/cli';
+const REQUEST_TIMEOUT_MS = 30_000;
 /**
  * Sanitize version to strip whitespace and ensure it has a 'v' prefix
  */
@@ -32973,7 +32974,10 @@ const fetchJson = async (url, token) => {
     }
     let response;
     try {
-        response = await fetch(url, { headers });
+        response = await fetch(url, {
+            headers,
+            signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+        });
     }
     catch (error) {
         const reason = error instanceof Error ? error.message : String(error);
@@ -32984,7 +32988,13 @@ const fetchJson = async (url, token) => {
     if (!response.ok) {
         throw new Error(`GitHub API request failed: GET ${url} returned HTTP ${response.status}`);
     }
-    return response.json();
+    try {
+        return await response.json();
+    }
+    catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        throw new Error(`GitHub API request failed: GET ${url} (invalid response body: ${reason})`, { cause: error });
+    }
 };
 const resolveLatest = async (token) => {
     const release = (await fetchJson(`${API_BASE}/releases/latest`, token));
