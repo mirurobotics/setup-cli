@@ -33080,7 +33080,7 @@ function _getGlobal(key, defaultValue) {
  * The latest stable version of the Miru CLI.
  * Update this when releasing a new version.
  */
-const LATEST_VERSION = 'v0.10.2';
+const LATEST_VERSION = 'v0.11.0';
 /**
  * Sanitize version to strip whitespace and ensure it has a 'v' prefix
  */
@@ -33102,7 +33102,8 @@ const resolve = (version) => {
         latest: LATEST_VERSION,
         v0: LATEST_VERSION,
         'v0.9': 'v0.9.2',
-        'v0.10': LATEST_VERSION
+        'v0.10': 'v0.10.3',
+        'v0.11': LATEST_VERSION
     };
     return Object.hasOwn(mappings, version) ? mappings[version] : version;
 };
