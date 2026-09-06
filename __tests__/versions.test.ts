@@ -67,8 +67,16 @@ describe('resolve', () => {
     expect(resolve('v0.10')).toBe('v0.10.3')
   })
 
-  test('resolves v0.11 to LATEST_VERSION', () => {
-    expect(resolve('v0.11')).toBe(LATEST_VERSION)
+  test('resolves v0.11 to v0.11.1 (pinned)', () => {
+    expect(resolve('v0.11')).toBe('v0.11.1')
+  })
+
+  test('resolves v0.12 to LATEST_VERSION', () => {
+    expect(resolve('v0.12')).toBe(LATEST_VERSION)
+  })
+
+  test('LATEST_VERSION is v0.12.1', () => {
+    expect(LATEST_VERSION).toBe('v0.12.1')
   })
 
   test('passes through exact version', () => {

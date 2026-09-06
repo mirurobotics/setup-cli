@@ -28,7 +28,7 @@ getting the head of the v0.11 series, which is now `v0.11.1` rather than
 
 ## Progress
 
-- [ ] Milestone 1 — bump `LATEST_VERSION` and the `resolve()` mappings; update
+- [x] Milestone 1 — bump `LATEST_VERSION` and the `resolve()` mappings; update
       and extend the unit tests.
 - [ ] Milestone 2 — regenerate `dist/` and confirm formatting and lint are
       clean.
