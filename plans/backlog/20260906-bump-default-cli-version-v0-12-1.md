@@ -94,9 +94,9 @@ Files that matter here:
   `node_modules/`, `coverage/`. Markdown under `plans/` is therefore covered by
   `npm run format:check`, with `proseWrap: always` at 80 columns.
 
-npm scripts (from `package.json`): `bundle` = `format:write` + `package`;
-`package` = `rimraf ./dist` + rollup; `ci-test` / `test` = jest; `all` also
-regenerates `badges/coverage.svg`.
+npm scripts (`package.json`): `bundle` = `format:write` + `package`; `package` =
+`rimraf ./dist` + rollup; `ci-test` = jest; `all` additionally rewrites
+`badges/coverage.svg`.
 
 Upstream release facts (verified against the `mirurobotics/cli` releases API on
 2026-09-06): latest stable is **v0.12.1** (published 2026-09-06). Descending
@@ -118,8 +118,8 @@ Exhaustive audit of version references in the repo (searched for `0.9`, `0.10`,
 - `__tests__/main.test.ts:168` —
   `expect(config.inputs.version.default).toBe('latest')`. **No change**:
   `action.yml` keeps `'latest'`.
-- `__tests__/releases.test.ts` — uses `v0.9.0` only to build expected download
-  URLs. **No change**.
+- `__tests__/releases.test.ts` — `v0.9.0` only builds expected download URLs.
+  **No change**.
 - `action.yml:12-13` — the input description cites `v0.10.0` and `v0.10` as
   syntax examples. **No change**: they illustrate accepted formats, not the
   default, and both remain valid inputs.
@@ -127,8 +127,8 @@ Exhaustive audit of version references in the repo (searched for `0.9`, `0.10`,
   (`version: 'v0.7.0'`) — **no change**; they exercise the latest path and the
   exact-pin passthrough respectively.
 - `README.md`, `SECURITY.md`, `src/releases.ts:31,49` — no CLI version
-  references (README links to the docs site; SECURITY says "latest release";
-  `releases.ts` mentions `latest-v16.x` inside Node.js doc URLs).
+  references (README links to the docs site; `releases.ts` matches only on
+  `latest-v16.x` in Node.js doc URLs).
 
 Nothing outside `src/versions.ts` (plus the generated bundle and the version
 unit tests) hardcodes the default version.
@@ -195,7 +195,26 @@ Expected:
 31:    'v0.12': LATEST_VERSION
 ```
 
-Step 2 — apply the `__tests__/versions.test.ts` edits from Plan of Work.
+Step 2 — apply the `__tests__/versions.test.ts` edits. Replace the existing
+`resolves v0.11 to LATEST_VERSION` test (lines 70-72) with these three cases,
+keeping them inside the `describe('resolve', ...)` block:
+
+```ts
+test('resolves v0.11 to v0.11.1 (pinned)', () => {
+  expect(resolve('v0.11')).toBe('v0.11.1')
+})
+
+test('resolves v0.12 to LATEST_VERSION', () => {
+  expect(resolve('v0.12')).toBe(LATEST_VERSION)
+})
+
+test('LATEST_VERSION is v0.12.1', () => {
+  expect(LATEST_VERSION).toBe('v0.12.1')
+})
+```
+
+`LATEST_VERSION` is already imported at the top of the file, so no import change
+is needed.
 
 Step 3 — run the unit tests:
 
@@ -206,20 +225,17 @@ npm run ci-test
 Expected: `Test Suites: 3 passed, 3 total` and `Tests: 44 passed, 44 total` (42
 before this change; `versions.test.ts` goes from 22 to 24 cases).
 
-Step 4 — commit milestone 1:
+Step 4 — tick the Milestone 1 box in this plan's Progress section, then commit
+milestone 1:
 
 ```sh
 git add src/versions.ts __tests__/versions.test.ts plans/
-git commit
-```
-
-Commit message:
-
-```text
+git commit -F - <<'EOF'
 feat: default to miru cli v0.12.1
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01N7MGEa1pRHhpuc9mjNnkMB
+EOF
 ```
 
 Step 5 — regenerate the bundle. `npm run bundle` runs `prettier --write .`
@@ -252,20 +268,16 @@ Expected: prettier reports `All matched files use Prettier code style!`, eslint
 prints nothing and exits 0, jest reports 44 passed. (`scripts/preflight.sh` runs
 exactly these three.)
 
-Step 8 — commit milestone 2:
+Step 8 — tick the Milestone 2 box in Progress, then commit milestone 2:
 
 ```sh
 git add dist/ plans/
-git commit
-```
-
-Commit message:
-
-```text
+git commit -F - <<'EOF'
 build: regenerate dist for v0.12.1 default
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01N7MGEa1pRHhpuc9mjNnkMB
+EOF
 ```
 
 Step 9 — milestone 3: push the branch and invoke `$preflight` (agent), which
