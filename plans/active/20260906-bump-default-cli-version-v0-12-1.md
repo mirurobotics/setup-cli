@@ -32,11 +32,23 @@ getting the head of the v0.11 series, which is now `v0.11.1` rather than
       and extend the unit tests.
 - [x] Milestone 2 — regenerate `dist/` and confirm formatting and lint are
       clean.
-- [ ] Milestone 3 — run `$preflight` until it reports CLEAN.
+- [x] Milestone 3 — run `$preflight` until it reports CLEAN.
 
 ## Surprises & Discoveries
 
-(Add entries as work proceeds.)
+- The super-linter `NATURAL_LANGUAGE` check (textlint with the default
+  terminology rules) lints this plan file itself and failed the first CI round
+  with seven terminology errors in it: `repo`, `jest`, `eslint`, and a bare
+  `README`, which must be written as `repository`, `Jest`, `ESLint`, and the
+  backticked filename respectively. None of the shipped source, tests or bundle
+  were involved. The `linter.yml` workflow only runs on pull requests to `main`
+  and on pushes to `main`, so the plan file had never been linted on the earlier
+  branch pushes. Fixed by rewording; the wording change is cosmetic and carries
+  no meaning.
+- The audit in Context and Orientation named the linters that gate this
+  repository but did not include `NATURAL_LANGUAGE`. Any future plan file added
+  to this repository has to satisfy textlint terminology as well as markdownlint
+  and Prettier.
 
 ## Decision Log
 
@@ -50,7 +62,20 @@ getting the head of the v0.11 series, which is now `v0.11.1` rather than
 
 ## Outcomes & Retrospective
 
-(Summarize at completion.)
+All three milestones landed as written; the only deviation was the extra
+terminology fix to this plan file described above. Everything the plan predicted
+held: `npm run ci-test` reports 44 passed across 3 suites at 100% coverage,
+`npm run bundle` produced exactly the two expected `dist/` changes, and no file
+outside `src/versions.ts`, `__tests__/versions.test.ts` and `dist/` needed a
+version edit.
+
+CI is green on the branch head across all three workflows. The `action-tests`
+job on `ubuntu-24.04` confirms the end-to-end behaviour this plan set out to
+change: with no `version` input the action downloads
+`.../releases/download/v0.12.1/cli_Linux_x86_64.tar.gz`, `miru version` prints
+`Version: 0.12.1`, and `steps.setup.outputs.version` is `v0.12.1`.
+`version-pin-test` still installs `0.7.0`, so the exact-pin passthrough is
+unaffected.
 
 ## Context and Orientation
 
