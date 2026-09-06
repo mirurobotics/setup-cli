@@ -11,10 +11,10 @@ as work proceeds.
 | `setup-cli/`                                   | read-write | All edits: `src/versions.ts`, `__tests__/versions.test.ts`, regenerated `dist/`. |
 | `cli/` (GitHub releases of `mirurobotics/cli`) | read-only  | Source of truth for which CLI versions exist. No code is read or written.        |
 
-This plan lives in `setup-cli/plans/` because every change is made in that repo.
-`plans/` does not exist there yet; `plans/backlog/` is created by this plan
-(org-wide convention, already present in `backend`, `core`, `cli-private`,
-`infra`).
+This plan lives in `setup-cli/plans/` because every change is made in that
+repository. `plans/` does not exist there yet; `plans/backlog/` is created by
+this plan (org-wide convention, already present in `backend`, `core`,
+`cli-private`, `infra`).
 
 ## Purpose / Big Picture
 
@@ -56,7 +56,7 @@ getting the head of the v0.11 series, which is now `v0.11.1` rather than
 
 `setup-cli` is a TypeScript GitHub Action. Source lives in `src/`, is bundled by
 rollup into a single committed file `dist/index.js`, and `action.yml` points the
-runner at that bundle. The repo root used throughout this plan is
+runner at that bundle. The repository root used throughout this plan is
 `/home/user/setup-cli`.
 
 Files that matter here:
@@ -95,7 +95,7 @@ Files that matter here:
   `npm run format:check`, with `proseWrap: always` at 80 columns.
 
 npm scripts (`package.json`): `bundle` = `format:write` + `package`; `package` =
-`rimraf ./dist` + rollup; `ci-test` = jest; `all` additionally rewrites
+`rimraf ./dist` + rollup; `ci-test` = Jest; `all` additionally rewrites
 `badges/coverage.svg`.
 
 Upstream release facts (verified against the `mirurobotics/cli` releases API on
@@ -103,8 +103,8 @@ Upstream release facts (verified against the `mirurobotics/cli` releases API on
 stable order: v0.12.1, v0.12.0, v0.11.1, v0.11.0, v0.10.3. So the v0.11 series
 head is `v0.11.1` and the v0.10 series head remains `v0.10.3`.
 
-Exhaustive audit of version references in the repo (searched for `0.9`, `0.10`,
-`0.11`, `0.12`, `LATEST_VERSION`, `latest`):
+Exhaustive audit of version references in the repository (searched for `0.9`,
+`0.10`, `0.11`, `0.12`, `LATEST_VERSION`, `latest`):
 
 - `src/versions.ts:5`, `src/versions.ts:25-30` — **change** (the only
   hand-written source of truth).
@@ -127,7 +127,7 @@ Exhaustive audit of version references in the repo (searched for `0.9`, `0.10`,
   (`version: 'v0.7.0'`) — **no change**; they exercise the latest path and the
   exact-pin passthrough respectively.
 - `README.md`, `SECURITY.md`, `src/releases.ts:31,49` — no CLI version
-  references (README links to the docs site; `releases.ts` matches only on
+  references (`README.md` links to the docs site; `releases.ts` matches only on
   `latest-v16.x` in Node.js doc URLs).
 
 Nothing outside `src/versions.ts` (plus the generated bundle and the version
@@ -264,8 +264,8 @@ npm run lint
 npm run ci-test
 ```
 
-Expected: prettier reports `All matched files use Prettier code style!`, eslint
-prints nothing and exits 0, jest reports 44 passed. (`scripts/preflight.sh` runs
+Expected: prettier reports `All matched files use Prettier code style!`, ESLint
+prints nothing and exits 0, Jest reports 44 passed. (`scripts/preflight.sh` runs
 exactly these three.)
 
 Step 8 — tick the Milestone 2 box in Progress, then commit milestone 2:
