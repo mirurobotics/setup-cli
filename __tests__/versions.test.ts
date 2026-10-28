@@ -75,8 +75,8 @@ describe('resolve', () => {
     expect(resolve('v0.12')).toBe(LATEST_VERSION)
   })
 
-  test('LATEST_VERSION is v0.12.1', () => {
-    expect(LATEST_VERSION).toBe('v0.12.1')
+  test('LATEST_VERSION is v0.12.4', () => {
+    expect(LATEST_VERSION).toBe('v0.12.4')
   })
 
   test('passes through exact version', () => {
