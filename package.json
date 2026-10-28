@@ -82,6 +82,6 @@
     "typescript-eslint": {
       "typescript": "$typescript"
     },
-    "undici": "^6.28.1"
+    "undici": "^6.29.1"
   }
 }
