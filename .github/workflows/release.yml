@@ -98,5 +98,7 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_DEPLOYS_WEBHOOK_URL }}
           summary: Release setup-cli ${{ github.ref_name }}
-          link: https://github.com/mirurobotics/setup-cli/releases/tag/${{ github.ref_name }}
+          link:
+            https://github.com/mirurobotics/setup-cli/releases/tag/${{
+            github.ref_name }}
           results: ${{ needs.release.result }}
