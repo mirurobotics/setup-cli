@@ -90,6 +90,7 @@ jobs:
   notify:
     name: 'Notify #deploys'
     needs: release
+    if: ${{ always() && needs.release.result != 'skipped' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
     permissions: {}
     steps:
