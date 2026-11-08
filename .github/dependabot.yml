@@ -16,7 +16,7 @@ updates:
       interval: weekly
     ignore:
       # rollup pins its native binaries exactly, so they move with rollup.
-      - dependency-name: "@rollup/rollup-*"
+      - dependency-name: '@rollup/rollup-*'
     groups:
       npm-development:
         dependency-type: development
