@@ -1,4 +1,11 @@
-name: JavaScript CodeQL Configuration
+name: TypeScript and Actions CodeQL Configuration
+
+# Scan the action source and its workflows/metadata; tests, fixtures and the
+# bundled dist/ stay out (previously done with source-root: src).
+paths:
+  - src
+  - .github
+  - action.yml
 
 paths-ignore:
   - node_modules
