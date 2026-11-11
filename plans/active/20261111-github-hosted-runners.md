@@ -37,9 +37,9 @@ mirurobotics/gotools#69, and cites both in its body.
 
 ### Precedent
 
-| New file                                          | Mirrors                                                                                                                                                                                                  |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `plans/backlog/20261111-github-hosted-runners.md` | `docs/plans/active/20261111-github-hosted-runners.md` (the exemplar's plan), `gotools/plans/active/20261111-github-hosted-runners.md` and `plans/completed/20260906-bump-default-cli-version-v0-12-1.md` |
+| New file                                         | Mirrors                                                                                                                                                                                                  |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plans/active/20261111-github-hosted-runners.md` | `docs/plans/active/20261111-github-hosted-runners.md` (the exemplar's plan), `gotools/plans/active/20261111-github-hosted-runners.md` and `plans/completed/20260906-bump-default-cli-version-v0-12-1.md` |
 
 No source file is added. Each edited line mirrors docs#320 and gotools#69,
 written as
@@ -84,9 +84,10 @@ terminology rule rejects `repo`.
 
 ## Progress
 
-- [ ] Move this plan to `plans/active/`.
-- [ ] Replace the 12 labels and drop the actionlint Blacksmith labels.
-- [ ] Commit the milestone (message in Concrete Steps).
+- [x] Move this plan to `plans/active/`.
+- [x] Replace the 12 labels and drop the actionlint Blacksmith labels.
+- [x] Commit the milestone (message in Concrete Steps).
+- [x] Source written
 - [ ] Push and open the draft PR; CI and a dispatched CodeQL run pass.
 - [ ] Preflight reports `CLEAN`.
 - [ ] After merge: AI Review, the `main` push runs and nightly CodeQL pass.
