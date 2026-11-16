@@ -18,7 +18,9 @@ on:
   merge_group:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.merge_group.head_sha }}
+  group:
+    ${{ github.workflow }}-${{ github.event.pull_request.number ||
+    github.event.merge_group.head_sha }}
   cancel-in-progress: true
 
 permissions:
