@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as tc from '@actions/tool-cache'
 import * as versions from './versions.js'
 import * as releases from './releases.js'
+import * as checksums from './checksums.js'
 
 /**
  * The main function for the action.
@@ -31,12 +32,15 @@ const getInputVersion = (): string => {
 }
 
 const downloadMiruCLI = async (version: string): Promise<string> => {
+  const expected = checksums.getExpected(version, releases.getAssetName())
   const downloadUrl = await releases.getDownloadUrl(version)
   core.info(`Downloading Miru CLI from ${downloadUrl}`)
   const token = core.getInput('token')
   const pathToTarball = token
     ? await tc.downloadTool(downloadUrl, undefined, `token ${token}`)
     : await tc.downloadTool(downloadUrl)
+  await checksums.verify(pathToTarball, expected)
+  core.info(`Verified SHA-256 ${expected}`)
   const pathToCLI = await tc.extractTar(pathToTarball)
   return pathToCLI
 }

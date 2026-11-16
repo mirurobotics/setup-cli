@@ -16,19 +16,23 @@ export const sanitize = (version: string): string => {
 }
 
 /**
+ * The specific version each alias, such as "latest" or a partial version, resolves to
+ */
+export const ALIASES: Record<string, string> = {
+  '': LATEST_VERSION,
+  latest: LATEST_VERSION,
+  v0: LATEST_VERSION,
+  'v0.9': 'v0.9.2',
+  'v0.10': 'v0.10.3',
+  'v0.11': 'v0.11.1',
+  'v0.12': LATEST_VERSION
+}
+
+/**
  * Resolve the input version to a specific version. If the version is empty or latest,
  * the specific version is returned in the format of vX.Y.Z. If the version is not
  * found, it is returned as is.
  */
 export const resolve = (version: string): string => {
-  const mappings: Record<string, string> = {
-    '': LATEST_VERSION,
-    latest: LATEST_VERSION,
-    v0: LATEST_VERSION,
-    'v0.9': 'v0.9.2',
-    'v0.10': 'v0.10.3',
-    'v0.11': 'v0.11.1',
-    'v0.12': LATEST_VERSION
-  }
-  return Object.hasOwn(mappings, version) ? mappings[version] : version
+  return Object.hasOwn(ALIASES, version) ? ALIASES[version] : version
 }
