@@ -41,7 +41,7 @@ jest.unstable_mockModule('../src/versions.js', () => ({
 
 // Mock releases module
 jest.unstable_mockModule('../src/releases.js', () => ({
-  getArch: jest.fn(() => 'x86_64'),
+  getAssetName: jest.fn(() => 'cli_Linux_x86_64.tar.gz'),
   getDownloadUrl: jest.fn(() => 'https://example.com/cli.tar.gz')
 }))
 
@@ -139,7 +139,10 @@ describe('run', () => {
 
     await run()
 
-    expect(mockGetExpected).toHaveBeenCalledWith('v1.0.0', 'x86_64')
+    expect(mockGetExpected).toHaveBeenCalledWith(
+      'v1.0.0',
+      'cli_Linux_x86_64.tar.gz'
+    )
     expect(mockVerify).toHaveBeenCalledWith('/tmp/cli.tar.gz', MOCK_SHA256)
     expect(mockVerify.mock.invocationCallOrder[0]).toBeLessThan(
       mockExtractTar.mock.invocationCallOrder[0]

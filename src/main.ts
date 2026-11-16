@@ -32,7 +32,7 @@ const getInputVersion = (): string => {
 }
 
 const downloadMiruCLI = async (version: string): Promise<string> => {
-  const expected = checksums.getExpected(version, releases.getArch())
+  const expected = checksums.getExpected(version, releases.getAssetName())
   const downloadUrl = await releases.getDownloadUrl(version)
   core.info(`Downloading Miru CLI from ${downloadUrl}`)
   const token = core.getInput('token')

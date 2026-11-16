@@ -15,8 +15,14 @@ jest.unstable_mockModule('os', () => ({
 
 // Import after mocking
 const os = await import('os')
-const { formatDownloadUrl, getArch, getDownloadUrl, mapPlatform, mapArch } =
-  await import('../src/releases.js')
+const {
+  formatAssetName,
+  formatDownloadUrl,
+  getAssetName,
+  getDownloadUrl,
+  mapPlatform,
+  mapArch
+} = await import('../src/releases.js')
 
 describe('formatDownloadUrl', () => {
   test('formats URL with version, platform, and arch', () => {
@@ -42,11 +48,25 @@ describe('formatDownloadUrl', () => {
   })
 })
 
-describe('getArch', () => {
-  test('maps the runner architecture', () => {
-    ;(os.arch as jest.Mock).mockReturnValue('arm64')
+describe('formatAssetName', () => {
+  test('formats the tarball name', () => {
+    expect(formatAssetName('Linux', 'arm64')).toBe('cli_Linux_arm64.tar.gz')
+  })
+})
 
-    expect(getArch()).toBe('arm64')
+describe('getAssetName', () => {
+  test('maps the runner platform and architecture', () => {
+    ;(os.platform as jest.Mock).mockReturnValue('linux')
+    ;(os.arch as jest.Mock).mockReturnValue('x64')
+
+    expect(getAssetName()).toBe('cli_Linux_x86_64.tar.gz')
+  })
+
+  test('throws on an unsupported platform before the architecture', () => {
+    ;(os.platform as jest.Mock).mockReturnValue('darwin')
+    ;(os.arch as jest.Mock).mockReturnValue('ia32')
+
+    expect(() => getAssetName()).toThrow(/darwin/)
   })
 })
 

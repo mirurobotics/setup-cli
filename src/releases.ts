@@ -7,19 +7,26 @@ export type DownloadUrlArgs = {
 }
 
 /**
+ * Format the release asset name for the Miru CLI, e.g. cli_Linux_x86_64.tar.gz
+ */
+export const formatAssetName = (platform: string, arch: string): string =>
+  `cli_${platform}_${arch}.tar.gz`
+
+/**
  * Format the download URL for the Miru CLI. URL pattern:
  * https://github.com/mirurobotics/cli/releases/download/{version}/cli_Linux_x86_64.tar.gz
  */
 export const formatDownloadUrl = (args: DownloadUrlArgs): string => {
   const { version, platform, arch } = args
-  const filename = `cli_${platform}_${arch}.tar.gz`
+  const filename = formatAssetName(platform, arch)
   return `https://github.com/mirurobotics/cli/releases/download/${version}/${filename}`
 }
 
 /**
- * Get the Miru CLI architecture for this runner
+ * Get the name of the release asset for this runner
  */
-export const getArch = (): string => mapArch(os.arch())
+export const getAssetName = (): string =>
+  formatAssetName(mapPlatform(os.platform()), mapArch(os.arch()))
 
 /**
  * Get the download URL for the release corresponding to the given version
@@ -28,7 +35,7 @@ export const getDownloadUrl = (version: string): string => {
   return formatDownloadUrl({
     version: version,
     platform: mapPlatform(os.platform()),
-    arch: getArch()
+    arch: mapArch(os.arch())
   })
 }
 

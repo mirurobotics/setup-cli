@@ -7,26 +7,23 @@ import * as os from 'os'
 import * as path from 'path'
 import { expect, test, describe } from '@jest/globals'
 import { CHECKSUMS, getExpected, verify } from '../src/checksums.js'
-import { LATEST_VERSION, resolve } from '../src/versions.js'
+import { ALIASES } from '../src/versions.js'
 
-const ARCHES = ['x86_64', 'arm64']
+const ASSETS = ['cli_Linux_x86_64.tar.gz', 'cli_Linux_arm64.tar.gz']
 
 describe('CHECKSUMS', () => {
-  test('holds a SHA-256 for both architectures of every version', () => {
-    for (const byArch of Object.values(CHECKSUMS)) {
-      expect(Object.keys(byArch).sort()).toEqual([...ARCHES].sort())
-      for (const sha of Object.values(byArch)) {
+  test('holds only SHA-256 hex digests', () => {
+    for (const byAsset of Object.values(CHECKSUMS)) {
+      for (const sha of Object.values(byAsset)) {
         expect(sha).toMatch(/^[0-9a-f]{64}$/)
       }
     }
   })
 
-  test('pins every version that resolve can return', () => {
-    const inputs = ['latest', 'v0', 'v0.9', 'v0.10', 'v0.11', 'v0.12']
-    const versions = [LATEST_VERSION, ...inputs.map(resolve)]
-    for (const version of versions) {
-      for (const arch of ARCHES) {
-        expect(getExpected(version, arch)).toMatch(/^[0-9a-f]{64}$/)
+  test('pins every version an alias resolves to', () => {
+    for (const version of Object.values(ALIASES)) {
+      for (const asset of ASSETS) {
+        expect(getExpected(version, asset)).toMatch(/^[0-9a-f]{64}$/)
       }
     }
   })
@@ -34,23 +31,29 @@ describe('CHECKSUMS', () => {
 
 describe('getExpected', () => {
   test('returns the pinned SHA-256', () => {
-    expect(getExpected('v0.12.4', 'x86_64')).toBe(
+    expect(getExpected('v0.12.4', 'cli_Linux_x86_64.tar.gz')).toBe(
       '13b83dbbe467c01f3fb08a44404a28f9cd61f97d6dafd0bd9eec2612fc631488'
     )
   })
 
   test('throws on a version with no pinned checksum', () => {
-    expect(() => getExpected('v9.9.9', 'x86_64')).toThrow(
-      /No pinned checksum for Miru CLI v9.9.9 \(x86_64\)/
+    expect(() => getExpected('v9.9.9', 'cli_Linux_x86_64.tar.gz')).toThrow(
+      /No pinned checksum for Miru CLI v9.9.9 \(cli_Linux_x86_64.tar.gz\)/
     )
   })
 
-  test('throws on an architecture with no pinned checksum', () => {
-    expect(() => getExpected('v0.12.4', 'ia32')).toThrow(/\(ia32\)/)
+  test('throws on an asset with no pinned checksum', () => {
+    expect(() => getExpected('v0.12.4', 'cli_Darwin_arm64.tar.gz')).toThrow(
+      /\(cli_Darwin_arm64.tar.gz\)/
+    )
   })
 
-  test('does not resolve inherited object keys as versions', () => {
-    expect(() => getExpected('constructor', 'x86_64')).toThrow(
+  test('does not resolve inherited object keys', () => {
+    // Without the own-key checks, CHECKSUMS.constructor.name is 'Object'.
+    expect(() => getExpected('constructor', 'name')).toThrow(
+      /No pinned checksum/
+    )
+    expect(() => getExpected('v0.12.4', 'constructor')).toThrow(
       /No pinned checksum/
     )
   })

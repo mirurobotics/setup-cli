@@ -10,7 +10,8 @@ inputs:
   version:
     description:
       'Miru CLI version to install. Supports exact versions (e.g., v0.10.0),
-      partial versions (e.g., v0.10), or "latest". Defaults to latest.'
+      partial versions (e.g., v0.10), or "latest". Defaults to latest. The
+      version must be one this release of the action pins a checksum for.'
     required: false
     default: 'latest'
   token:
