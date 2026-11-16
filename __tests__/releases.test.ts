@@ -15,7 +15,7 @@ jest.unstable_mockModule('os', () => ({
 
 // Import after mocking
 const os = await import('os')
-const { formatDownloadUrl, getDownloadUrl, mapPlatform, mapArch } =
+const { formatDownloadUrl, getArch, getDownloadUrl, mapPlatform, mapArch } =
   await import('../src/releases.js')
 
 describe('formatDownloadUrl', () => {
@@ -39,6 +39,14 @@ describe('formatDownloadUrl', () => {
     expect(url).toBe(
       'https://github.com/mirurobotics/cli/releases/download/v1.0.0/cli_Linux_arm64.tar.gz'
     )
+  })
+})
+
+describe('getArch', () => {
+  test('maps the runner architecture', () => {
+    ;(os.arch as jest.Mock).mockReturnValue('arm64')
+
+    expect(getArch()).toBe('arm64')
   })
 })
 

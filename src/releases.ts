@@ -17,13 +17,18 @@ export const formatDownloadUrl = (args: DownloadUrlArgs): string => {
 }
 
 /**
+ * Get the Miru CLI architecture for this runner
+ */
+export const getArch = (): string => mapArch(os.arch())
+
+/**
  * Get the download URL for the release corresponding to the given version
  */
 export const getDownloadUrl = (version: string): string => {
   return formatDownloadUrl({
     version: version,
     platform: mapPlatform(os.platform()),
-    arch: mapArch(os.arch())
+    arch: getArch()
   })
 }
 
