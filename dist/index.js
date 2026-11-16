@@ -33663,7 +33663,7 @@ function requireSemver () {
 	return semver;
 }
 
-requireSemver();
+var semverExports = requireSemver();
 
 (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -33922,103 +33922,9 @@ function _getGlobal(key, defaultValue) {
 }
 
 /**
- * The latest stable version of the Miru CLI.
- * Update this when releasing a new version.
- */
-const LATEST_VERSION = 'v0.12.4';
-/**
- * Sanitize version to strip whitespace and ensure it has a 'v' prefix
- */
-const sanitize = (version) => {
-    version = version.trim();
-    if (!version || version.toLowerCase() === 'latest') {
-        return 'latest';
-    }
-    return `v${version.replace(/^v/i, '')}`;
-};
-/**
- * The specific version each alias, such as "latest" or a partial version, resolves to
- */
-const ALIASES = {
-    '': LATEST_VERSION,
-    latest: LATEST_VERSION,
-    v0: LATEST_VERSION,
-    'v0.9': 'v0.9.2',
-    'v0.10': 'v0.10.3',
-    'v0.11': 'v0.11.1',
-    'v0.12': LATEST_VERSION
-};
-/**
- * Resolve the input version to a specific version. If the version is empty or latest,
- * the specific version is returned in the format of vX.Y.Z. If the version is not
- * found, it is returned as is.
- */
-const resolve = (version) => {
-    return Object.hasOwn(ALIASES, version) ? ALIASES[version] : version;
-};
-
-/**
- * Format the release asset name for the Miru CLI, e.g. cli_Linux_x86_64.tar.gz
- */
-const formatAssetName = (platform, arch) => `cli_${platform}_${arch}.tar.gz`;
-/**
- * Format the download URL for the Miru CLI. URL pattern:
- * https://github.com/mirurobotics/cli/releases/download/{version}/cli_Linux_x86_64.tar.gz
- */
-const formatDownloadUrl = (args) => {
-    const { version, platform, arch } = args;
-    const filename = formatAssetName(platform, arch);
-    return `https://github.com/mirurobotics/cli/releases/download/${version}/${filename}`;
-};
-/**
- * Get the name of the release asset for this runner
- */
-const getAssetName = () => formatAssetName(mapPlatform(os.platform()), mapArch(os.arch()));
-/**
- * Get the download URL for the release corresponding to the given version
- */
-const getDownloadUrl = (version) => {
-    return formatDownloadUrl({
-        version: version,
-        platform: mapPlatform(os.platform()),
-        arch: mapArch(os.arch())
-    });
-};
-/**
- * Map os.platform() (https://nodejs.org/docs/latest-v16.x/api/os.html#osplatform) to
- * the appropriate Miru CLI platform (https://github.com/mirurobotics/cli/releases)
- */
-const mapPlatform = (platform) => {
-    const mappings = {
-        linux: 'Linux'
-    };
-    const mapped = mappings[platform];
-    if (!mapped) {
-        const supported = Object.keys(mappings).join(', ');
-        throw new Error(`Unsupported platform "${platform}". The Miru CLI setup action only supports: ${supported}.`);
-    }
-    return mapped;
-};
-/**
- * Map os.arch() (https://nodejs.org/docs/latest-v16.x/api/os.html#osarch) to
- * the appropriate Miru CLI architecture (https://github.com/mirurobotics/cli/releases)
- */
-const mapArch = (arch) => {
-    const mappings = {
-        x64: 'x86_64',
-        arm64: 'arm64'
-    };
-    const mapped = mappings[arch];
-    if (!mapped) {
-        const supported = Object.keys(mappings).join(', ');
-        throw new Error(`Unsupported architecture "${arch}". The Miru CLI setup action only supports: ${supported}.`);
-    }
-    return mapped;
-};
-
-/**
  * SHA-256 of each Linux release tarball of the Miru CLI, by version and then by
- * asset name. The action refuses any version missing here, so add each new CLI
+ * asset name. The action refuses any version missing here, and "latest" and
+ * partial versions resolve to the newest stable entry, so add each new CLI
  * release, taking the SHA-256 for each of these assets from its checksums file.
  */
 const CHECKSUMS = {
@@ -34389,6 +34295,93 @@ const verify = async (path, expected) => {
     if (actual !== expected) {
         throw new Error(`Checksum mismatch for ${path}: expected ${expected}, got ${actual}`);
     }
+};
+
+/**
+ * Sanitize version to strip whitespace and ensure it has a 'v' prefix
+ */
+const sanitize = (version) => {
+    version = version.trim();
+    if (!version || version.toLowerCase() === 'latest') {
+        return 'latest';
+    }
+    return `v${version.replace(/^v/i, '')}`;
+};
+const PARTIAL_VERSION = /^v(\d+)(\.\d+)?$/;
+/**
+ * Resolve the input version to a specific version. Empty, "latest" and partial
+ * versions (e.g. v0.12) resolve to the newest stable release in CHECKSUMS that
+ * matches them, in the format vX.Y.Z. Any other version is returned as is.
+ */
+const resolve = (version) => {
+    const range = version === '' || version === 'latest'
+        ? '*'
+        : PARTIAL_VERSION.test(version)
+            ? `${version.slice(1)}.x`
+            : undefined;
+    if (range === undefined) {
+        return version;
+    }
+    return semverExports.maxSatisfying(Object.keys(CHECKSUMS), range) ?? version;
+};
+
+/**
+ * Format the release asset name for the Miru CLI, e.g. cli_Linux_x86_64.tar.gz
+ */
+const formatAssetName = (platform, arch) => `cli_${platform}_${arch}.tar.gz`;
+/**
+ * Format the download URL for the Miru CLI. URL pattern:
+ * https://github.com/mirurobotics/cli/releases/download/{version}/cli_Linux_x86_64.tar.gz
+ */
+const formatDownloadUrl = (args) => {
+    const { version, platform, arch } = args;
+    const filename = formatAssetName(platform, arch);
+    return `https://github.com/mirurobotics/cli/releases/download/${version}/${filename}`;
+};
+/**
+ * Get the name of the release asset for this runner
+ */
+const getAssetName = () => formatAssetName(mapPlatform(os.platform()), mapArch(os.arch()));
+/**
+ * Get the download URL for the release corresponding to the given version
+ */
+const getDownloadUrl = (version) => {
+    return formatDownloadUrl({
+        version: version,
+        platform: mapPlatform(os.platform()),
+        arch: mapArch(os.arch())
+    });
+};
+/**
+ * Map os.platform() (https://nodejs.org/docs/latest-v16.x/api/os.html#osplatform) to
+ * the appropriate Miru CLI platform (https://github.com/mirurobotics/cli/releases)
+ */
+const mapPlatform = (platform) => {
+    const mappings = {
+        linux: 'Linux'
+    };
+    const mapped = mappings[platform];
+    if (!mapped) {
+        const supported = Object.keys(mappings).join(', ');
+        throw new Error(`Unsupported platform "${platform}". The Miru CLI setup action only supports: ${supported}.`);
+    }
+    return mapped;
+};
+/**
+ * Map os.arch() (https://nodejs.org/docs/latest-v16.x/api/os.html#osarch) to
+ * the appropriate Miru CLI architecture (https://github.com/mirurobotics/cli/releases)
+ */
+const mapArch = (arch) => {
+    const mappings = {
+        x64: 'x86_64',
+        arm64: 'arm64'
+    };
+    const mapped = mappings[arch];
+    if (!mapped) {
+        const supported = Object.keys(mappings).join(', ');
+        throw new Error(`Unsupported architecture "${arch}". The Miru CLI setup action only supports: ${supported}.`);
+    }
+    return mapped;
 };
 
 /**

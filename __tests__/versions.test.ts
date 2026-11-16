@@ -1,7 +1,7 @@
 /**
  * Unit tests for version handling functions
  */
-import { sanitize, resolve, LATEST_VERSION } from '../src/versions.js'
+import { sanitize, resolve } from '../src/versions.js'
 import { expect, test, describe } from '@jest/globals'
 
 describe('sanitize', () => {
@@ -47,59 +47,34 @@ describe('sanitize', () => {
 })
 
 describe('resolve', () => {
-  test('resolves empty string to LATEST_VERSION', () => {
-    expect(resolve('')).toBe(LATEST_VERSION)
+  test.each([
+    ['', 'v0.12.5'],
+    ['latest', 'v0.12.5'],
+    ['v0', 'v0.12.5'],
+    ['v0.12', 'v0.12.5'],
+    ['v0.11', 'v0.11.1'],
+    ['v0.10', 'v0.10.3'],
+    ['v0.9', 'v0.9.2'],
+    ['v0.1', 'v0.1.2']
+  ])('resolves %p to the newest pinned stable release, %s', (input, want) => {
+    expect(resolve(input)).toBe(want)
   })
 
-  test('resolves latest to LATEST_VERSION', () => {
-    expect(resolve('latest')).toBe(LATEST_VERSION)
+  test('skips prereleases', () => {
+    // v0.12.5-beta.5 is pinned, but v0.12.5 is the newest stable release.
+    expect(resolve('v0.12')).not.toMatch(/-/)
   })
 
-  test('resolves v0 to LATEST_VERSION', () => {
-    expect(resolve('v0')).toBe(LATEST_VERSION)
+  test('returns an exact version as is', () => {
+    expect(resolve('v0.7.0')).toBe('v0.7.0')
+    expect(resolve('v0.12.5-beta.5')).toBe('v0.12.5-beta.5')
   })
 
-  test('resolves v0.9 to v0.9.2 (pinned)', () => {
-    expect(resolve('v0.9')).toBe('v0.9.2')
+  test('returns a partial version with no pinned release as is', () => {
+    expect(resolve('v9.9')).toBe('v9.9')
   })
 
-  test('resolves v0.10 to v0.10.3 (pinned)', () => {
-    expect(resolve('v0.10')).toBe('v0.10.3')
-  })
-
-  test('resolves v0.11 to v0.11.1 (pinned)', () => {
-    expect(resolve('v0.11')).toBe('v0.11.1')
-  })
-
-  test('resolves v0.12 to LATEST_VERSION', () => {
-    expect(resolve('v0.12')).toBe(LATEST_VERSION)
-  })
-
-  test('LATEST_VERSION is v0.12.4', () => {
-    expect(LATEST_VERSION).toBe('v0.12.4')
-  })
-
-  test('passes through exact version', () => {
-    expect(resolve('v0.9.1')).toBe('v0.9.1')
-  })
-
-  test('passes through unknown version as-is', () => {
-    expect(resolve('v1.0.0')).toBe('v1.0.0')
-  })
-
-  test('passes through unknown partial version as-is', () => {
-    expect(resolve('v1.2')).toBe('v1.2')
-  })
-
-  test('does not resolve inherited prototype key "toString"', () => {
-    expect(resolve('toString')).toBe('toString')
-  })
-
-  test('does not resolve inherited prototype key "constructor"', () => {
-    expect(resolve('constructor')).toBe('constructor')
-  })
-
-  test('does not resolve inherited prototype key "hasOwnProperty"', () => {
-    expect(resolve('hasOwnProperty')).toBe('hasOwnProperty')
+  test('returns other input as is', () => {
+    expect(resolve('main')).toBe('main')
   })
 })

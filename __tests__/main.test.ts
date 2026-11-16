@@ -34,7 +34,6 @@ jest.unstable_mockModule('@actions/tool-cache', () => ({
 // Mock versions module
 const MOCK_LATEST_VERSION = 'v0.10.0'
 jest.unstable_mockModule('../src/versions.js', () => ({
-  LATEST_VERSION: MOCK_LATEST_VERSION,
   sanitize: jest.fn((v: string) => v || 'latest'),
   resolve: jest.fn((v: string) => (v === 'latest' ? MOCK_LATEST_VERSION : v))
 }))

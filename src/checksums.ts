@@ -5,7 +5,8 @@ type LinuxAsset = 'cli_Linux_x86_64.tar.gz' | 'cli_Linux_arm64.tar.gz'
 
 /**
  * SHA-256 of each Linux release tarball of the Miru CLI, by version and then by
- * asset name. The action refuses any version missing here, so add each new CLI
+ * asset name. The action refuses any version missing here, and "latest" and
+ * partial versions resolve to the newest stable entry, so add each new CLI
  * release, taking the SHA-256 for each of these assets from its checksums file.
  */
 export const CHECKSUMS: Record<string, Record<LinuxAsset, string>> = {

@@ -7,7 +7,6 @@ import * as os from 'os'
 import * as path from 'path'
 import { expect, test, describe } from '@jest/globals'
 import { CHECKSUMS, getExpected, verify } from '../src/checksums.js'
-import { ALIASES } from '../src/versions.js'
 
 const ASSETS = ['cli_Linux_x86_64.tar.gz', 'cli_Linux_arm64.tar.gz']
 
@@ -17,14 +16,6 @@ describe('CHECKSUMS', () => {
       expect(Object.keys(byAsset).sort()).toEqual([...ASSETS].sort())
       for (const sha of Object.values(byAsset)) {
         expect(sha).toMatch(/^[0-9a-f]{64}$/)
-      }
-    }
-  })
-
-  test('pins every version an alias resolves to', () => {
-    for (const version of Object.values(ALIASES)) {
-      for (const asset of ASSETS) {
-        expect(getExpected(version, asset)).toMatch(/^[0-9a-f]{64}$/)
       }
     }
   })
