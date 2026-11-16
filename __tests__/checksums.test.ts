@@ -12,8 +12,9 @@ import { ALIASES } from '../src/versions.js'
 const ASSETS = ['cli_Linux_x86_64.tar.gz', 'cli_Linux_arm64.tar.gz']
 
 describe('CHECKSUMS', () => {
-  test('holds only SHA-256 hex digests', () => {
+  test('holds a SHA-256 for both assets of every version', () => {
     for (const byAsset of Object.values(CHECKSUMS)) {
+      expect(Object.keys(byAsset).sort()).toEqual([...ASSETS].sort())
       for (const sha of Object.values(byAsset)) {
         expect(sha).toMatch(/^[0-9a-f]{64}$/)
       }

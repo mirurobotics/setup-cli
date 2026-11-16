@@ -34016,6 +34016,11 @@ const mapArch = (arch) => {
     return mapped;
 };
 
+/**
+ * SHA-256 of each Linux release tarball of the Miru CLI, by version and then by
+ * asset name. The action refuses any version missing here, so add each new CLI
+ * release, taking the SHA-256 for each of these assets from its checksums file.
+ */
 const CHECKSUMS = {
     'v0.12.5': {
         'cli_Linux_x86_64.tar.gz': 'bab721efc4e8bcbacb1baa0906db1f44e9972c8cda36d9bc68a4eb442111b508',

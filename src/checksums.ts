@@ -1,13 +1,13 @@
 import * as crypto from 'crypto'
 import * as fs from 'fs'
 
+type LinuxAsset = 'cli_Linux_x86_64.tar.gz' | 'cli_Linux_arm64.tar.gz'
+
 /**
  * SHA-256 of each Linux release tarball of the Miru CLI, by version and then by
  * asset name. The action refuses any version missing here, so add each new CLI
- * release, copying the lines for these assets from its checksums file.
+ * release, taking the SHA-256 for each of these assets from its checksums file.
  */
-type LinuxAsset = 'cli_Linux_x86_64.tar.gz' | 'cli_Linux_arm64.tar.gz'
-
 export const CHECKSUMS: Record<string, Record<LinuxAsset, string>> = {
   'v0.12.5': {
     'cli_Linux_x86_64.tar.gz':
