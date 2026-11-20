@@ -41,7 +41,17 @@ jest.unstable_mockModule('../src/versions.js', () => ({
 
 // Mock releases module
 jest.unstable_mockModule('../src/releases.js', () => ({
+  getAssetName: jest.fn(() => 'cli_Linux_x86_64.tar.gz'),
   getDownloadUrl: jest.fn(() => 'https://example.com/cli.tar.gz')
+}))
+
+// Mock checksums module
+const MOCK_SHA256 = 'a'.repeat(64)
+const mockGetExpected = jest.fn()
+const mockVerify = jest.fn()
+jest.unstable_mockModule('../src/checksums.js', () => ({
+  getExpected: mockGetExpected,
+  verify: mockVerify
 }))
 
 // Import after mocking
@@ -52,6 +62,8 @@ describe('run', () => {
     jest.clearAllMocks()
     mockDownloadTool.mockResolvedValue('/tmp/cli.tar.gz')
     mockExtractTar.mockResolvedValue('/tmp/cli')
+    mockGetExpected.mockReturnValue(MOCK_SHA256)
+    mockVerify.mockResolvedValue(undefined)
   })
 
   // Helper to mock getInput per-input. Defaults: given version, empty token.
@@ -120,6 +132,44 @@ describe('run', () => {
     )
     expect(mockDownloadTool).toHaveBeenCalledTimes(1)
     expect(mockDownloadTool.mock.calls[0]).toHaveLength(1)
+  })
+
+  test('verifies the tarball before extracting it', async () => {
+    setInputs({ version: 'v1.0.0' })
+
+    await run()
+
+    expect(mockGetExpected).toHaveBeenCalledWith(
+      'v1.0.0',
+      'cli_Linux_x86_64.tar.gz'
+    )
+    expect(mockVerify).toHaveBeenCalledWith('/tmp/cli.tar.gz', MOCK_SHA256)
+    expect(mockVerify.mock.invocationCallOrder[0]).toBeLessThan(
+      mockExtractTar.mock.invocationCallOrder[0]
+    )
+  })
+
+  test('fails before downloading a version with no pinned checksum', async () => {
+    setInputs({ version: 'v9.9.9' })
+    mockGetExpected.mockImplementation(() => {
+      throw new Error('No pinned checksum')
+    })
+
+    await run()
+
+    expect(mockDownloadTool).not.toHaveBeenCalled()
+    expect(mockSetFailed).toHaveBeenCalledWith('No pinned checksum')
+  })
+
+  test('does not install a tarball that fails verification', async () => {
+    setInputs({ version: 'v1.0.0' })
+    mockVerify.mockRejectedValue(new Error('Checksum mismatch'))
+
+    await run()
+
+    expect(mockExtractTar).not.toHaveBeenCalled()
+    expect(mockAddPath).not.toHaveBeenCalled()
+    expect(mockSetFailed).toHaveBeenCalledWith('Checksum mismatch')
   })
 
   test('handles download error', async () => {
